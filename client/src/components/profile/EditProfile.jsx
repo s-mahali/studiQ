@@ -15,14 +15,14 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
+import { useSelector, useDispatch } from "react-redux";
+import {setAuthUser} from "@/redux/slicers/authSlice"
+import { editProfileData } from "@/services/api.services";
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL,
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+
+
+
+
 
 const educationLevelOptions = [
   "high school",
@@ -34,7 +34,7 @@ const educationLevelOptions = [
 
 const proficiencyOptions = ["beginner", "intermediate", "advanced"];
 
-const EditProfile = ({ userId, onClose, userData }) => {
+const EditProfile = ({ onClose, userData }) => {
   const initialState = {
     subjects: [
       {
@@ -54,6 +54,11 @@ const EditProfile = ({ userId, onClose, userData }) => {
   const [input, setInput] = useState(initialState);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
+  
+  
+  console.log("user", user)
 
   //Set initial values
   useEffect(() => {
@@ -160,13 +165,13 @@ const EditProfile = ({ userId, onClose, userData }) => {
 
     setIsLoading(true);
     try {
-      const res = await api.put(`/userprofile/updateprofile/${userId}`, input);
+      const res = await editProfileData(input);
       console.log(res);
       if (res.data.success) {
         toast.success(res.data.message);
         onClose && onClose(res.data.user); // pass the updated user data to parent
-        navigate(`/profile/${userId}`);
-        //dispatch(setAuthUser(res.data.user));
+        navigate(`/profile`);
+        dispatch(setAuthUser(res.data.user));
       }
     } catch (err) {
       console.log(err);

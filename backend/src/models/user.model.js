@@ -186,7 +186,7 @@ userSchema.methods.generateToken = function () {
     { id: this._id, email: this.email, username: this.username },
     process.env.JWT_SECRET,
     {
-      expiresIn: "1h",
+      expiresIn: "30d",
     }
   );
 };

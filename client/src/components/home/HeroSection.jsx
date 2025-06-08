@@ -10,6 +10,7 @@ import heroImg from "../../assets/darkbg2.jpg";
 import { Button } from "../ui/button";
 import { University } from "lucide-react";
 import student from "../../assets/student.svg";
+import { Link } from "react-router-dom";
 
 const heroSection = () => {
   return (
@@ -40,6 +41,7 @@ const heroSection = () => {
             </p>
             {/* call to action butoons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+              <Link to="/signup">
               <Button
                 size="lg"
                 className={
@@ -48,6 +50,7 @@ const heroSection = () => {
               >
                 Get Started
               </Button>
+              </Link>
 
               <Button
                 variant={"outline"}

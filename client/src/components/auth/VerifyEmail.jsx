@@ -1,17 +1,11 @@
-import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { CheckCircle2, Mail, Clock } from 'lucide-react';
+import { verifyEmail } from '@/services/api.services';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL,
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json"
-  },
-});
+
 
 const VerifyEmail = () => {
   const [verificationCode, setVerificationCode] = useState('');
@@ -79,8 +73,8 @@ const VerifyEmail = () => {
     setError(null);
     
     try {
-      const res = await api.post('/user/verify', {verificationCode});
-      if (res.data.success) {
+      const res = await verifyEmail({ verificationCode });
+      if (res?.data?.success) {
         setSuccess(true);
         navigate('/login');
       }

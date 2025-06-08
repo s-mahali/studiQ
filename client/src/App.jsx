@@ -26,11 +26,11 @@ const browserRouter = createBrowserRouter([
           element: <FindPeersPage/>
          },
          {
-          path: "/profile",
+          path: "/profile/:userId",
           element: <StudyProfilePage/>
          },
          {
-          path: "/edit-profile/:id",
+          path: "/edit-profile",
           element: <EditProfilePage/>
          }
     ]

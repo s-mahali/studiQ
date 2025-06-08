@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Button } from "../ui/button";
 import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -31,9 +32,11 @@ const Header = () => {
             ))}
           </ul>
 
-          <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:opacity-90 text-white px-6 border-b-2 border-white">
+          <Link to="/signup">
+          <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:opacity-90 text-white px-6 border-b-2 border-white cursor-pointer">
             Get Started
           </Button>
+          </Link>
 
           
         </nav>

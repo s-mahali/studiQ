@@ -1,21 +1,14 @@
 import { useState } from 'react';
 import { useForm } from "react-hook-form";
-import axios from 'axios';
 import { Link, useNavigate } from "react-router-dom";
 import Logo from '@/lib/Logo';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { EyeIcon, EyeOffIcon, UserIcon, MailIcon, LockIcon, Loader2Icon } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { userSignUp } from '@/services/api.services';
 
-// axios instance
-const api = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL,
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json"
-  },
-});
+
 
 const Signup = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -28,8 +21,8 @@ const Signup = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.post("/user/signup", data);
-      if (response.data.success) {
+      const response = await userSignUp(data);
+      if (response?.data?.success) {
         
         toast.success(response.data.message);
         navigate("/verify-email");

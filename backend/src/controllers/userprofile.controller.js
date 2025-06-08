@@ -6,6 +6,7 @@ import {
 import ErrorHandler from "../middlewares/error.middleware.js";
 import { z } from "zod";
 import multer from "multer";
+import User from "../models/user.model.js";
 
 //configure multer for memory storage
 const storage = multer.memoryStorage();
@@ -70,19 +71,13 @@ export const updateUserProfile = catchAsyncError(async (req, res, next) => {
     }
 
     const userId = req.user._id;
+    console.log("userId", userId);
     //call service here
     const updatedUser = await updateUserService(userId, validatedData);
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      data: {
-        user: {
-          subjects: updatedUser.subjects,
-          nickname: updatedUser.nickname,
-          educationLevel: updatedUser.educationLevel,
-          skills: updatedUser.skills,
-        },
-      },
+      data: null,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -98,7 +93,7 @@ export const uploadProfilePic = catchAsyncError(async (req, res, next) => {
   if (!file) {
     return next(new ErrorHandler("Please upload a file", 400));
   }
-  // call uploadProfilePictureService service  here
+  // call uploadProfilePictureService   here
   const updatedUser = await uploadProfilePictureService(userId, file);
   if (!updatedUser) {
     return next(new ErrorHandler("Failed to update profile picture", 500));
@@ -107,13 +102,26 @@ export const uploadProfilePic = catchAsyncError(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Profile picture updated successfully",
-    data: {
-      user: {
-        profilePicture: {
-          url: updatedUser.profilePicture.url,
-          fileId: updatedUser.profilePicture.fileId,
-        },
-      },
-    },
+    payload: null,
+  });
+});
+
+//get-user-profile
+export const getUserProfileById = catchAsyncError(async (req, res, next) => {
+  const { userId } = req.params;
+
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found!",
+    });
+  }
+  console.log("user", user);
+
+  return res.status(200).json({
+    success: true,
+    message: "User fetched successfully!",
+    payload: user,
   });
 });

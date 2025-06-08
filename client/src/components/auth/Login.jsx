@@ -15,15 +15,7 @@ import {
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { setAuthUser } from "@/redux/slicers/authSlice";
-
-// axios instance
-const api = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL,
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+import { userLogin } from "@/services/api.services";
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -41,12 +33,12 @@ const Login = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.post("/user/login", data);
-      if (response.data.success) {
-         dispatch(setAuthUser(response.data.user));
+      const response = await userLogin(data);
+      if (response?.data?.success) {
+        dispatch(setAuthUser(response.data.user));
         console.log("response", response.data.user);
         toast.success(response.data.message);
-        navigate("/");
+        navigate(`/profile/${response.data.user._id}`);
       }
     } catch (error) {
       setError(
