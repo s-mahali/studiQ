@@ -1,10 +1,10 @@
-import MiddleSlide from '@/components/home/MiddleSlide'
+import FindPeers from '@/components/home/FindPeers'
 import React from 'react'
 
 const FindPeersPage = () => {
   return (
     <>
-      <MiddleSlide/>
+      <FindPeers className='min-h-screen'/>
     </>
   )
 }

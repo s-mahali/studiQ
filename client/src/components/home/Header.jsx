@@ -5,83 +5,80 @@ import { Button } from "../ui/button";
 import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const isLogin = useSelector((state) => state.auth.status);
+  console.log("isLogin", isLogin)
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
   return (
-    <header className="w-full  py-4 px-6 top-0 z-50  bg-gradient-to-r from-black to-slate-700">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* logo */}
-        <Logo />
+    <header className="fixed top-0 left-0 w-full z-50 bg-transparent">
+      <div className="max-w-7xl mx-auto flex items-center py-4 px-6">
+        <span>
+          <Logo />
+        </span>
 
-        {/* desktop navigation */}
-        <nav className="hidden md:flex items-center gap-8">
+        {/* Desktop navigation */}
+        <nav className="hidden md:flex items-center gap-8 mx-auto">
           <ul className="flex gap-6">
             {["Home", "Features", "Pricing", "About"].map((item) => (
               <li key={item}>
-                <a
-                  href={`/${item.toLowerCase()}`}
-                  className="text-teal-500 hover:text-teal-700 font-medium transition-colors duration-200"
+                <Link
+                  to={`/${item.toLowerCase()}`}
+                  className="text-white hover:text-teal-400 font-medium transition-colors duration-200"
                 >
                   {item}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
-
-          <Link to="/signup">
-          <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:opacity-90 text-white px-6 border-b-2 border-white cursor-pointer">
-            Get Started
-          </Button>
-          </Link>
-
-          
+          {!isLogin && (
+            <Link to="/signup">
+              <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:opacity-90 text-white px-6 border-b-2 border-white cursor-pointer">
+                Get Started
+              </Button>
+            </Link>
+          )}
         </nav>
-        <div>
-          <ThemeToggle />
-        </div>
 
-        {/* mobile menu button */}
+        {/* Mobile menu button */}
         <div className="md:hidden">
           <Button
-            
             size="icon"
             onClick={toggleMenu}
             aria-label="Toggle menu"
-            className="text-teal-700"
+            className="text-white bg-transparent hover:bg-white/10"
           >
-            <span>
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />} 
-            </span>
-
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </Button>
-          
         </div>
       </div>
 
-      {/* mobile navigation */}
+      {/* Mobile navigation */}
       {isMenuOpen && (
-        <div className="md:hidden absolute top-16 left-0 right-0  border-b shadow-md py-7 px-6 z-40 text-center">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-black/80 backdrop-blur-md border-b shadow-md py-7 px-6 z-40 text-center">
           <ul className="flex flex-col gap-4">
             {["Home", "Features", "Pricing", "About"].map((item) => (
               <li key={item}>
-                <a
-                  href={`/${item.toLowerCase()}`}
-                  className="text-teal-500 hover:text-teal-700 font-medium block py-2 transition-colors duration-200"
+                <Link
+                  to={`/${item.toLowerCase()}`}
+                  className="text-white hover:text-teal-400 font-medium block py-2 transition-colors duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
           <div className="mt-4">
-            <Button className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:opacity-90 text-white">
-              Get Started
-            </Button>
+            <Link to="/signup">
+              <Button className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:opacity-90 text-white">
+                Get Started
+              </Button>
+            </Link>
           </div>
         </div>
       )}

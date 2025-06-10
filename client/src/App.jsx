@@ -1,5 +1,5 @@
 import React from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider} from "react-router-dom";
 
 import HomePage from "./pages/Home.page";
 import SignupPage from "./pages/Signup.page";
@@ -10,6 +10,7 @@ import Layout from "./lib/Layout";
 import FindPeersPage from "./pages/FindPeers.page";
 import StudyProfilePage from "./components/profile/UserProfile";
 import EditProfilePage from "./pages/EditProfilePage";
+
 
 
 const browserRouter = createBrowserRouter([

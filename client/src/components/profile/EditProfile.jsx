@@ -18,6 +18,7 @@ import { Button } from "../ui/button";
 import { useSelector, useDispatch } from "react-redux";
 import {setAuthUser} from "@/redux/slicers/authSlice"
 import { editProfileData } from "@/services/api.services";
+import {motion} from "framer-motion"
 
 
 
@@ -34,7 +35,7 @@ const educationLevelOptions = [
 
 const proficiencyOptions = ["beginner", "intermediate", "advanced"];
 
-const EditProfile = ({ onClose, userData }) => {
+const EditProfile = () => {
   const initialState = {
     subjects: [
       {
@@ -62,21 +63,21 @@ const EditProfile = ({ onClose, userData }) => {
 
   //Set initial values
   useEffect(() => {
-    if (userData) {
+    if (user) {
       setInput({
-        nickname: userData.nickname || "",
-        educationLevel: userData.educationLevel || "",
+        nickname: user.nickname || "",
+        educationLevel: user.educationLevel || "",
         subjects:
-          userData.subjects && userData.subjects.length > 0
-            ? userData.subjects
+          user.subjects && user.subjects.length > 0
+            ? user.subjects
             : [{ name: "", proficiency: "beginner" }],
         skills:
-          userData.skills && userData.skills.length > 0
-            ? userData.skills
+          user.skills && user.skills.length > 0
+            ? user.skills
             : [{ name: "" }],
       });
     }
-  }, [userData]);
+  }, [user]);
 
   const changeEventHandler = (e) => {
     setInput({
@@ -169,8 +170,8 @@ const EditProfile = ({ onClose, userData }) => {
       console.log(res);
       if (res.data.success) {
         toast.success(res.data.message);
-        onClose && onClose(res.data.user); // pass the updated user data to parent
-        navigate(`/profile`);
+        
+        navigate(`/profile/${user._id}`);
         dispatch(setAuthUser(res.data.user));
       }
     } catch (err) {
@@ -183,18 +184,29 @@ const EditProfile = ({ onClose, userData }) => {
 
   return (
     <div className="bg-gray-900 min-h-screen p-4 md:p-6 text-white">
-      <div className="max-w-3xl mx-auto bg-gray-800/60 rounded-lg shadow-lg">
+      <motion.div
+       initial={{opacity: 0, scale: 0.95}}
+       animate={{opacity: 1, scale: 1}}
+       transition={{duration: 0.3}}
+       
+      >
+       <div className="max-w-3xl mx-auto bg-gray-800/60 rounded-lg shadow-lg">
         <div className="border-b border-gray-700 p-4 md:p-6 flex items-center justify-between">
           <div flex items-center gap-2>
             <button
-              onClick={onClose}
+              onClick={() => navigate(`/profile/${user._id}`)}
               className="p-2 rounded-full hover:bg-gray-700"
             >
               <ArrowLeft size={20} />
             </button>
             <h2 className="text-xl font-bold">Edit Profile</h2>
           </div>
-          <button
+          <motion.button
+           initial={{opacity:0, y:20}}
+           animate={{opacity:1, y:0}}
+           transistion={{delay: 0.5}}
+           whileHover={{scale: 1.02}}
+           whileTap={{scale: 0.98}}
             onClick={submitHandler}
             isLoading={isLoading}
             disabled={isLoading}
@@ -206,7 +218,7 @@ const EditProfile = ({ onClose, userData }) => {
             ) : (
               "Save"
             )}
-          </button>
+          </motion.button>
         </div>
 
         <form onSubmit={submitHandler} className="p-4 md:p-6 space-y-6">
@@ -368,6 +380,7 @@ const EditProfile = ({ onClose, userData }) => {
           </div>
         </form>
       </div>
+      </motion.div>
     </div>
   );
 };

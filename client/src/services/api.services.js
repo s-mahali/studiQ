@@ -10,6 +10,12 @@ export const userLogin = async (data) => {
     return response;
 }
 
+//logout
+export const userLogout = async () => {
+     const response = await serviceAxiosInstance("/user/logout");
+     return response;
+}
+
 export const verifyEmail = async (data) => {
     const response = await serviceAxiosInstance.post("/user/verify", data);
     return response;
@@ -34,3 +40,4 @@ export const editProfileData = async (data) => {
     const response = await serviceAxiosInstance.put(`/userprofile/profile`, data);
     return response;
 }
+

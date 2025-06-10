@@ -16,9 +16,10 @@ const Footer = () => {
   return (
     <footer className="bg-gray-900 text-gray-300">
       {/* Main Footer */}
-      <div className="container mx-auto px-4 py-12">
+
+      {/* <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {/* Column 1 - About */}
+          Column 1 - About
           <div>
             <h3 className="text-xl font-bold text-white mb-4">StudiQ</h3>
             <p className="mb-4">
@@ -58,7 +59,7 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Column 2 - Quick Links */}
+          Column 2 - Quick Links
           <div>
             <h3 className="text-xl font-bold text-white mb-4">Quick Links</h3>
             <ul className="space-y-2">
@@ -85,7 +86,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Column 3 - Contact Us */}
+          Column 3 - Contact Us
           <div>
             <h3 className="text-xl font-bold text-white mb-4">Contact Us</h3>
             <ul className="space-y-3">
@@ -107,7 +108,7 @@ const Footer = () => {
           
          
         </div>
-      </div>
+      </div> */}
 
       {/* Bottom Footer */}
       <div className="border-t border-gray-800 py-6">
