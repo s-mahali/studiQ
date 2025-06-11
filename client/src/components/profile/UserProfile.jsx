@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-hot-toast";
 
 import {
@@ -20,12 +20,15 @@ import {
   Loader2,
   Pencil,
 } from "lucide-react";
-import { editProfilePic, fetchUserProfile, userLogout } from "@/services/api.services";
+import {
+  editProfilePic,
+  fetchUserProfile,
+  userLogout,
+} from "@/services/api.services";
 import { setAuthUser, setStatus } from "@/redux/slicers/authSlice";
 import { AnimatePresence, motion } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
-
 
 export default function StudyProfilePage() {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -40,6 +43,8 @@ export default function StudyProfilePage() {
   console.log(userId, "userID");
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const authorId = useSelector((state) => state.auth.user?._id);
+  const isAuthor = authorId === userId;
 
   const fileChangeHandler = (e) => {
     const file = e.target.files?.[0];
@@ -49,23 +54,32 @@ export default function StudyProfilePage() {
   };
 
   useEffect(() => {
+    setLoading(true);
     async function fetchProfileData() {
       try {
+        if (!userId) {
+          toast.error("Invalid user ID");
+          setLoading(false);
+          return;
+        }
         const response = await fetchUserProfile(userId);
         if (response?.status === 200) {
           console.log(response?.data?.payload, "userProfiledata");
           setProfileData(response?.data.payload);
           toast.success(response.data.message);
-          dispatch(setAuthUser(response.data.payload));
+          if (userId === authorId) {
+            dispatch(setAuthUser(response.data.payload));
+          }
         }
       } catch (error) {
         toast.error(error.response.data.message);
+        navigate("/");
       } finally {
         setLoading(false);
       }
     }
     fetchProfileData();
-  }, [userId]);
+  }, [userId, dispatch, navigate, authorId]);
 
   const updatePfp = async () => {
     if (!pfpUrl) return;
@@ -86,53 +100,17 @@ export default function StudyProfilePage() {
 
   //logout
   const handleLogOut = async () => {
-     try {
+    try {
       const response = await userLogout();
-      if(response.status === 200){
-         navigate("/")
-         dispatch(setAuthUser(null));
-         dispatch(setStatus(false))
+      if (response.status === 200) {
+        navigate("/");
+        dispatch(setAuthUser(null));
+        dispatch(setStatus(false));
       }
-     } catch (error) {
-         toast.error(error.response.data.message || "something went wrong!")
-     }
-  }
-
-  // const profileData = {
-  //   name: "Emily Parker",
-  //   username: "em_parker",
-  //   verified: true,
-  //   profilePicture: "/api/placeholder/200/200",
-  //   educationLevel: "Computer Science - Junior Year",
-  //   subjects: ["Algorithms", "Database Systems", "Web Development", "Software Engineering"],
-  //   skills: ["Problem-solving", "Time Management", "Critical Thinking", "Group Collaboration"],
-  //   activity: {
-  //     lastLogin: "Today at 2:30 PM",
-  //     totalStudyTime: "126 hours",
-  //     progress: 78
-  //   },
-  //   isActive: true,
-  //   friends: [
-  //     { id: 1, name: "Alex Johnson", picture: "/api/placeholder/40/40" },
-  //     { id: 2, name: "Maya Chen", picture: "/api/placeholder/40/40" },
-  //     { id: 3, name: "David Kim", picture: "/api/placeholder/40/40" },
-  //     { id: 4, name: "Sarah Miller", picture: "/api/placeholder/40/40" },
-  //     { id: 5, name: "+12 more", picture: null }
-  //   ],
-  //   friendRequests: [
-  //     { id: 101, name: "James Wilson", picture: "/api/placeholder/40/40" },
-  //     { id: 102, name: "Priya Sharma", picture: "/api/placeholder/40/40" }
-  //   ],
-  //   sentRequests: [
-  //     { id: 201, name: "Michael Brown", picture: "/api/placeholder/40/40" }
-  //   ],
-  //   groups: [
-  //     { id: 1, name: "Algorithm Masters" },
-  //     { id: 2, name: "Database Design Club" },
-  //     { id: 3, name: "Web Dev Enthusiasts" }
-  //   ],
-
-  // };
+    } catch (error) {
+      toast.error(error.response.data.message || "something went wrong!");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -166,7 +144,7 @@ export default function StudyProfilePage() {
                       {
                         // hover overlay
                         <AnimatePresence>
-                          {avatarHover && (
+                          {avatarHover && isAuthor && (
                             <motion.button
                               initial={{ opacity: 0, y: 20 }}
                               animate={{ opacity: 1, y: 0 }}
@@ -208,67 +186,74 @@ export default function StudyProfilePage() {
                         <span>{profileData?.educationLevel}</span>
                       </div>
 
-                      <Link to="/edit-profile">
+                      {isAuthor ? (
+                        <Link to="/edit-profile">
+                          <button className="bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded-md transition-colors text-sm font-medium cursor-pointer">
+                            Edit Profile
+                          </button>
+                        </Link>
+                      ) : (
                         <button className="bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded-md transition-colors text-sm font-medium cursor-pointer">
-                          Edit Profile
+                          Connect
                         </button>
-                      </Link>
+                      )}
                     </div>
                   </div>
 
                   {/* edit pfp picture dialog */}
-                  <Dialog open={editPfpOpen} onOpenChange={setEditPfpOpen}>
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1.1 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <DialogContent className={"max-w-xs"}>
-                        <DialogHeader>
-                          <DialogTitle>Edit Profile Picture</DialogTitle>
-                        </DialogHeader>
-                        <div className="flex flex-col items-center gap-4 py-4">
-                          <img
-                            src={
-                              pfpUrl
-                                ? URL.createObjectURL(pfpUrl)
-                                : profileData?.profilePicture?.url
-                            }
-                            alt="pfp"
-                            className="w-24 h-24 rounded-full border-2 border-teal-500 object-cover"
-                          />
-                          <input
-                            type="file"
-                            ref={pfpRef}
-                            className="hidden"
-                            accept="image/*"
-                            onChange={fileChangeHandler}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => pfpRef.current?.click()}
-                            className="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-white text-xs font-medium"
-                          >
-                            Choose File
-                          </button>
+                  {isAuthor && (
+                    <Dialog open={editPfpOpen} onOpenChange={setEditPfpOpen}>
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1.1 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <DialogContent className={"max-w-xs"}>
+                          <DialogHeader>
+                            <DialogTitle>Edit Profile Picture</DialogTitle>
+                          </DialogHeader>
+                          <div className="flex flex-col items-center gap-4 py-4">
+                            <img
+                              src={
+                                pfpUrl
+                                  ? URL.createObjectURL(pfpUrl)
+                                  : profileData?.profilePicture?.url
+                              }
+                              alt="pfp"
+                              className="w-24 h-24 rounded-full border-2 border-teal-500 object-cover"
+                            />
+                            <input
+                              type="file"
+                              ref={pfpRef}
+                              className="hidden"
+                              accept="image/*"
+                              onChange={fileChangeHandler}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => pfpRef.current?.click()}
+                              className="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-white text-xs font-medium"
+                            >
+                              Choose File
+                            </button>
 
-                          <button
-                            
-                            onClick={updatePfp}
-                            disabled={pfpLoading}
-                            className="bg-teal-600 hover:bg--teal-700 px-4 py-2
+                            <button
+                              onClick={updatePfp}
+                              disabled={pfpLoading}
+                              className="bg-teal-600 hover:bg--teal-700 px-4 py-2
                     rounded text-white text-sm font-medium cursor-pointer"
-                          >
-                            {pfpLoading ? (
-                              <Loader2 className="animate-spin mr-4" />
-                            ) : (
-                              "Upload New Picture"
-                            )}
-                          </button>
-                        </div>
-                      </DialogContent>
-                    </motion.div>
-                  </Dialog>
+                            >
+                              {pfpLoading ? (
+                                <Loader2 className="animate-spin mr-4" />
+                              ) : (
+                                "Upload New Picture"
+                              )}
+                            </button>
+                          </div>
+                        </DialogContent>
+                      </motion.div>
+                    </Dialog>
+                  )}
 
                   {/* Stats Grid */}
 
@@ -283,11 +268,15 @@ export default function StudyProfilePage() {
                         <span className="text-teal-400 font-medium">
                           Last login:
                         </span>{" "}
-                        {profileData.activity.lastLogin ? new Date (profileData.activity.lastLogin).toLocaleString("en-Us", {
-                           hour: "2-digit",
-                           minute: "2-digit",
-                           hour12: true
-                        }) : "" }
+                        {profileData?.activity.lastLogin
+                          ? new Date(
+                              profileData?.activity.lastLogin
+                            ).toLocaleString("en-Us", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: true,
+                            })
+                          : ""}
                       </div>
                     </div>
 
@@ -398,71 +387,86 @@ export default function StudyProfilePage() {
 
                 {/* Right column: Friends, requests, settings */}
                 <div className="lg:w-3/12">
-                  <div className="relative mb-6">
-                    <button
-                      className="bg-gray-800/60 w-full p-4 rounded-lg flex items-center justify-between"
-                      onClick={() => setShowDropdown(!showDropdown)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Settings size={18} />
-                        <span>Account Settings</span>
-                      </div>
-                      <ChevronDown
-                        size={18}
-                        className={`transition-transform ${
-                          showDropdown ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
+                  {isAuthor ? (
+                    <>
+                      <div className="relative mb-6">
+                        <button
+                          className="bg-gray-800/60 w-full p-4 rounded-lg flex items-center justify-between"
+                          onClick={() => setShowDropdown(!showDropdown)}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Settings size={18} />
+                            <span>Account Settings</span>
+                          </div>
+                          <ChevronDown
+                            size={18}
+                            className={`transition-transform ${
+                              showDropdown ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
 
-                    {showDropdown && (
-                      <div className="absolute w-full mt-2 bg-gray-800 rounded-lg shadow-lg z-10 py-2">
-                        <a
-                          href="#"
-                          className="block px-4 py-2 hover:bg-gray-700"
-                        >
-                          Profile Settings
-                        </a>
-                        <a
-                          href="#"
-                          className="block px-4 py-2 hover:bg-gray-700"
-                        >
-                          Privacy
-                        </a>
-                        <a
-                          href="#"
-                          className="block px-4 py-2 hover:bg-gray-700"
-                        >
-                          Notifications
-                        </a>
-                        <a
-                          href="#"
-                          className="block px-4 py-2 hover:bg-gray-700"
-                        >
-                          Study Preferences
-                        </a>
-                        <Button
-                          onClick={handleLogOut}
-                          variant={"outline"}
-                          className="block px-4 py-2 hover:bg-gray-700 w-full cursor-pointer"
-                        >
-                          Logout
-                        </Button>
+                        {showDropdown && (
+                          <div className="absolute w-full mt-2 bg-gray-800 rounded-lg shadow-lg z-10 py-2">
+                            <a
+                              href="#"
+                              className="block px-4 py-2 hover:bg-gray-700"
+                            >
+                              Profile Settings
+                            </a>
+                            <a
+                              href="#"
+                              className="block px-4 py-2 hover:bg-gray-700"
+                            >
+                              Privacy
+                            </a>
+                            <a
+                              href="#"
+                              className="block px-4 py-2 hover:bg-gray-700"
+                            >
+                              Notifications
+                            </a>
+                            <a
+                              href="#"
+                              className="block px-4 py-2 hover:bg-gray-700"
+                            >
+                              Study Preferences
+                            </a>
+                            <Button
+                              onClick={handleLogOut}
+                              variant={"outline"}
+                              className="block px-4 py-2 hover:bg-gray-700 w-full cursor-pointer"
+                            >
+                              Logout
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="bg-gray-800/60 rounded-lg p-4 mb-6">
+                        <button className="w-full bg-teal-600 hover:bg-teal-700 py-2 rounded-md text-white font-medium transition-colors mb-3">
+                          <UserPlus size={16} className="inline mr-2" />
+                          Connect with {profileData?.nickname}
+                        </button>
+                        <button className="w-full bg-transparent border border-teal-500 hover:bg-teal-800/20 py-2 rounded-md text-teal-400 font-medium transition-colors">
+                          <Send size={16} className="inline mr-2" />
+                          Send Message
+                        </button>
+                      </div>
+                    </>
+                  )}
 
                   {/* Friends List */}
                   <div className="bg-gray-800/60 rounded-lg p-4 mb-6">
                     <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
                       <Users size={18} />
-                      Friends ({
-                        profileData?.friends.length > 0 ? (
-                          profileData?.friends.length - 1
-                        ) : (
-                           "No friends yet"
-                        )
-                      })
+                      Friends (
+                      {profileData?.friends.length > 0
+                        ? profileData?.friends.length - 1
+                        : "No friends yet"}
+                      )
                     </h3>
 
                     <div className="space-y-3">
@@ -495,7 +499,9 @@ export default function StudyProfilePage() {
                   </div>
 
                   {/* Friend Requests */}
-                  <div className="bg-gray-800/60 rounded-lg p-4 mb-6">
+                  {
+                    isAuthor && (
+                      <div className="bg-gray-800/60 rounded-lg p-4 mb-6">
                     <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
                       <UserPlus size={18} />
                       Friend Requests ({profileData?.friendRequests.length})
@@ -525,9 +531,13 @@ export default function StudyProfilePage() {
                       ))}
                     </div>
                   </div>
+                    )
+                  }
 
                   {/* Sent Requests */}
-                  <div className="bg-gray-800/60 rounded-lg p-4">
+                 {
+                  isAuthor && (
+                     <div className="bg-gray-800/60 rounded-lg p-4">
                     <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
                       <Send size={18} />
                       Sent Requests ({profileData?.sentRequests?.length || 0})
@@ -555,6 +565,8 @@ export default function StudyProfilePage() {
                         ))}
                     </div>
                   </div>
+                  )
+                 }
                 </div>
               </div>
             </div>

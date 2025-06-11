@@ -141,6 +141,8 @@ export const login = catchAsyncError(async (req, res, next) => {
     secure: true,
     sameSite: "none",
     httpOnly: true,
+    maxAge: 5*24*60*60*1000, // 5 days
+    path: '/',
   });
 
   const savedUser = user.toObject();

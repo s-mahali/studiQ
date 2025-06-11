@@ -17,7 +17,7 @@ import storage from "redux-persist/lib/storage";
 
 
 const persistConfig = {
-  key: "root",
+  key: "studiQ",
   version: 1,
   storage,
 };

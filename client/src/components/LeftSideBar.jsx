@@ -1,5 +1,5 @@
 import { BookOpen,  LogOut,  PlusSquare,  UserLock } from 'lucide-react';
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useLocation } from 'react-router-dom';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
@@ -12,6 +12,13 @@ const LeftSideBar = () => {
     const [hoverItem, setHoveredItem] = useState(null);
     const location = useLocation();
     const user = useSelector((state) => state.auth.user);
+    console.log("user::", user)
+    let userId = user?._id;
+    if(!userId){
+       return null;
+    }
+    
+
     const sidebarItems = [
     {
       icon: (
@@ -24,7 +31,7 @@ const LeftSideBar = () => {
         </Avatar>
       ),
       text: "Profile",
-      path: `/profile/${user._id}`
+      path: `/profile/${userId}`
     },
     
     {

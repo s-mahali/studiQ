@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
-import { setAuthUser } from "@/redux/slicers/authSlice";
+import { setAuthUser, setStatus } from "@/redux/slicers/authSlice";
 import { userLogin } from "@/services/api.services";
 
 const Login = () => {
@@ -36,6 +36,7 @@ const Login = () => {
       const response = await userLogin(data);
       if (response?.data?.success) {
         dispatch(setAuthUser(response.data.user));
+        dispatch(setStatus(true));
         console.log("response", response.data.user);
         toast.success(response.data.message);
         navigate(`/profile/${response.data.user._id}`);

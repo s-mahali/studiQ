@@ -86,7 +86,6 @@ const userSchema = new mongoose.Schema(
     friendRequests: [
       {
         from: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        to: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         status: {
           type: String,
           enum: ["pending", "accepted", "rejected", "blocked"],
@@ -186,7 +185,7 @@ userSchema.methods.generateToken = function () {
     { id: this._id, email: this.email, username: this.username },
     process.env.JWT_SECRET,
     {
-      expiresIn: "30d",
+      expiresIn: "5d",
     }
   );
 };

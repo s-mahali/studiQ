@@ -41,3 +41,15 @@ export const editProfileData = async (data) => {
     return response;
 }
 
+//get-suggested-peers
+export const fetchSuggestedPeers = async (page=1) => {
+    const response = await serviceAxiosInstance.get(`/peers/suggestedpeers`)
+    return response;
+}
+
+//send-connection-request
+export const sendConnectionToPeers = async (receiverId) => {
+    const response = await serviceAxiosInstance.post("/peers/sendrequest", receiverId);
+    return response;
+}
+
