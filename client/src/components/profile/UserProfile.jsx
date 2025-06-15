@@ -19,24 +19,39 @@ import {
   BarChart3,
   Loader2,
   Pencil,
+  X,
 } from "lucide-react";
 import {
+  acceptFriendRequest,
+  cancelSentRequest,
   editProfilePic,
+  fetchSendRequests,
   fetchUserProfile,
+  getIncomingFriendRequests,
+  rejectFriendRequest,
+  sendConnectionToPeers,
   userLogout,
 } from "@/services/api.services";
 import { setAuthUser, setStatus } from "@/redux/slicers/authSlice";
 import { AnimatePresence, motion } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export default function StudyProfilePage() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [profileData, setProfileData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [incomingRequest, setIncomingRequest] = useState([]);
+  const [sendRequest, setSendRequest] = useState([]);
   const [editPfpOpen, setEditPfpOpen] = useState(false);
   const [avatarHover, setAvatarHover] = useState(false);
   const [pfpUrl, setPfpUrl] = useState("");
+  const [relationshipStatus, setRelationshipStatus] = useState("none"); //none, friend, incoming, outgoing
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [connectionLoading, setConnectionLoading] = useState(false);
+  const [messageLoading, setMessageLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const pfpRef = useRef();
   const [pfpLoading, setPfpLoading] = useState(false);
   const { userId } = useParams();
@@ -54,12 +69,12 @@ export default function StudyProfilePage() {
   };
 
   useEffect(() => {
-    setLoading(true);
+    setProfileLoading(true);
     async function fetchProfileData() {
       try {
         if (!userId) {
           toast.error("Invalid user ID");
-          setLoading(false);
+          setProfileLoading(false);
           return;
         }
         const response = await fetchUserProfile(userId);
@@ -75,7 +90,7 @@ export default function StudyProfilePage() {
         toast.error(error.response.data.message);
         navigate("/");
       } finally {
-        setLoading(false);
+        setProfileLoading(false);
       }
     }
     fetchProfileData();
@@ -112,9 +127,157 @@ export default function StudyProfilePage() {
     }
   };
 
+  const incomingRequestHandler = async () => {
+    try {
+      const response = await getIncomingFriendRequests();
+      if (response.status === 200) {
+        setIncomingRequest(response.data.requests);
+        console.log("requests", response.data.requests);
+      }
+    } catch (error) {
+      console.error(error.message);
+      toast.error(error.response.data.message || "something went wrong");
+    }
+  };
+
+  const handleSendRequest = async (receiverId) => {
+    setConnectionLoading(true);
+    try {
+      const response = await sendConnectionToPeers({ receiverId });
+      if (response?.status === 200) {
+        setRelationshipStatus("outgoing");
+        toast.success(response.data.message || "Request Sent Successfully");
+        await sentRequestHandler();
+      }
+    } catch (error) {
+      console.error(error.message);
+      toast.error(
+        error.response.data.message || "error sending connection request"
+      );
+    } finally {
+      setConnectionLoading(false);
+    }
+  };
+
+  const sentRequestHandler = async () => {
+    try {
+      const response = await fetchSendRequests();
+      if (response.status === 200) {
+        setSendRequest(response.data.payload);
+        console.log("Sentrequests", response.data.payload);
+      }
+    } catch (error) {
+      console.error(error.message);
+      toast.error(
+        error.response.data.message || "failed to fetch sent requests"
+      );
+    }
+  };
+  //cancel sent-request
+  const handleCancelRequest = async (receiverId) => {
+    setCancelLoading(true);
+    console.log("sendRequest1", sendRequest);
+    try {
+      const response = await cancelSentRequest({
+        sentUserId: receiverId,
+      });
+      if (response.status === 200) {
+        await sentRequestHandler();
+        setRelationshipStatus("none");
+        toast.success(response.data.message);
+        console.log("sendRequest", sendRequest);
+      }
+    } catch (error) {
+      console.error(error.message);
+      toast.error(error.response.data.message || "failed to cancel request");
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
+  //accept request
+  const handleAcceptRequest = async (senderId) => {
+    setMessageLoading(true);
+    try {
+      const response = await acceptFriendRequest({
+        reqSenderId: senderId,
+      });
+      if (response.status === 200) {
+        toast.success(response.data.message);
+        console.log(response.data);
+        await incomingRequestHandler();
+        await sentRequestHandler();
+      }
+    } catch (error) {
+      console.error(error.message);
+      toast.error(error.response.data.message || "failed to accept request");
+    } finally {
+      setMessageLoading(false);
+    }
+  };
+
+  //reject friend request
+  const handleRejectRequest = async (senderId) => {
+    setActionLoading(true);
+    try {
+      const response = await rejectFriendRequest({
+        reqSenderId: senderId,
+      });
+      if (response?.status === 200) {
+        await incomingRequestHandler();
+        setRelationshipStatus("none");
+        toast.success(response?.data.message);
+      }
+    } catch (error) {
+      console.error(error.message);
+      toast.error(error.response?.data.message || "failed to reject request");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isAuthor && profileData && incomingRequest && sendRequest) {
+      const isFriend =
+        profileData.friends.length > 0 &&
+        profileData.friends.some(
+          (friend) =>
+            friend.user.toString() == authorId.toString() ||
+            (friend.user._id && friend.user._id == authorId)
+        );
+      console.log("isFriend", isFriend);
+
+      if (isFriend) {
+        setRelationshipStatus("friend");
+        return;
+      }
+      const hasIncomingRequest = incomingRequest.some(
+        (request) => request.sender.id == userId
+      );
+      if (hasIncomingRequest) {
+        setRelationshipStatus("incoming");
+        return;
+      }
+      const hasSentRequest = sendRequest.some(
+        (req) => req.reciever.id === userId
+      );
+
+      if (hasSentRequest) {
+        setRelationshipStatus("outgoing");
+        return;
+      }
+      setRelationshipStatus("none");
+    }
+  }, [isAuthor, profileData, incomingRequest, sendRequest, userId, authorId]);
+
+  useEffect(() => {
+    incomingRequestHandler();
+    sentRequestHandler();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {loading ? (
+      {profileLoading ? (
         <Loader2 className="animate-spin mx-auto mt-10 w-10 h-10 text-teal-400" />
       ) : (
         <div className="bg-gradient-to-b from-teal-900/30 to-transparent py-8">
@@ -193,9 +356,56 @@ export default function StudyProfilePage() {
                           </button>
                         </Link>
                       ) : (
-                        <button className="bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded-md transition-colors text-sm font-medium cursor-pointer">
-                          Connect
-                        </button>
+                        <>
+                          {relationshipStatus === "friend" && (
+                            <button
+                              disabled
+                              className="bg-gray-600 px-4 py-2 rounded-md text-sm font-medium"
+                            >
+                              <Users size={16} className="inline mr-2" />
+                              Friends
+                            </button>
+                          )}
+                          {relationshipStatus === "incoming" && (
+                            <button
+                              onClick={() => handleAcceptRequest(userId)}
+                              disabled={messageLoading}
+                              className="bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded-md transition-colors text-sm font-medium cursor-pointer"
+                            >
+                              {messageLoading ? (
+                                <Loader2 className="animate-spin mr-2 h-4 w-4 inline" />
+                              ) : (
+                                <UserPlus size={16} className="inline mr-2" />
+                              )}
+                              Accept Request
+                            </button>
+                          )}
+
+                          {relationshipStatus === "outgoing" && (
+                            <button
+                              disabled
+                              className="bg-gray-600 px-4 py-2 rounded-md text-sm font-medium"
+                            >
+                              <Clock size={16} className="inline mr-2" />
+                              Request Sent
+                            </button>
+                          )}
+
+                          {relationshipStatus === "none" && (
+                            <button
+                              onClick={() => handleSendRequest(userId)}
+                              disabled={connectionLoading}
+                              className="bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded-md transition-colors text-sm font-medium cursor-pointer"
+                            >
+                              {connectionLoading ? (
+                                <Loader2 className="animate-spin mr-2 h-4 w-4 inline" />
+                              ) : (
+                                <UserPlus size={16} className="inline mr-2" />
+                              )}
+                              Connect
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -446,14 +656,98 @@ export default function StudyProfilePage() {
                   ) : (
                     <>
                       <div className="bg-gray-800/60 rounded-lg p-4 mb-6">
-                        <button className="w-full bg-teal-600 hover:bg-teal-700 py-2 rounded-md text-white font-medium transition-colors mb-3">
-                          <UserPlus size={16} className="inline mr-2" />
-                          Connect with {profileData?.nickname}
-                        </button>
-                        <button className="w-full bg-transparent border border-teal-500 hover:bg-teal-800/20 py-2 rounded-md text-teal-400 font-medium transition-colors">
-                          <Send size={16} className="inline mr-2" />
-                          Send Message
-                        </button>
+                        {relationshipStatus === "friend" ? (
+                          <div className="flex gap-2 flex-col">
+                            <div className="w-full bg-gray-700 py-2 px-4 rounded-md text-center">
+                              <Users size={16} className="inline mr-2" />
+                              You and {profileData?.username} are friends
+                            </div>
+                            <button className="w-full bg-transparent border border-teal-500 hover:bg-teal-800/20 py-2 rounded-md text-teal-400 font-medium transition-colors">
+                              <Send size={16} className="inline mr-2" />
+                              Send Message
+                            </button>
+                          </div>
+                        ) : relationshipStatus === "incoming" ? (
+                          <div className="flex gap-2 flex-col">
+                            <button
+                              onClick={() => handleAcceptRequest(userId)}
+                              disabled={messageLoading}
+                              className="w-full bg-teal-600 hover:bg-teal-700 py-2 rounded-md text-white font-medium transition-colors"
+                            >
+                              {messageLoading ? (
+                                <Loader2
+                                  size={16}
+                                  className="animate-spin inline mr-2"
+                                />
+                              ) : (
+                                <UserPlus size={16} className="inline mr-2" />
+                              )}
+                              Accept Request
+                            </button>
+                            <button
+                              className="w-full bg-transparent border border-red-500 hover:bg-red-800/20 py-2 rounded-md text-red-400 font-medium transition-colors"
+                              disabled={actionLoading}
+                              onClick={() => handleRejectRequest(userId)}
+                            >
+                              <X size={16} className="inline mr-2" />
+                              {actionLoading ? (
+                                <Loader2
+                                  size={16}
+                                  className="animate-spin inline mr-2"
+                                />
+                              ) : (
+                                "Reject Request"
+                              )}
+                            </button>
+                          </div>
+                        ) : relationshipStatus === "outgoing" ? (
+                          <div className="flex gap-2 flex-col">
+                            <button
+                              className="w-full bg-gray-700 py-2 rounded-md text-white font-medium cursor-not-allowed"
+                              disabled
+                            >
+                              <Clock size={16} className="inline mr-2" />
+                              Request Sent
+                            </button>
+                            <button
+                              onClick={() => handleCancelRequest(userId)}
+                              disabled={cancelLoading}
+                              className="w-full bg-transparent border border-red-500 hover:bg-red-800/20 py-2 rounded-md text-red-400 font-medium transition-colors"
+                            >
+                              <X size={16} className="inline mr-2" />
+                              {cancelLoading ? (
+                                <Loader2
+                                  size={16}
+                                  className="animate-spin inline mr-2"
+                                />
+                              ) : (
+                                "Cancel Request"
+                              )}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2 flex-col">
+                            <button
+                              onClick={() => handleSendRequest(userId)}
+                              disabled={connectionLoading}
+                              className="w-full bg-teal-600 hover:bg-teal-700 py-2 rounded-md text-white font-medium transition-colors"
+                            >
+                              {connectionLoading ? (
+                                <Loader2
+                                  size={16}
+                                  className="animate-spin inline mr-2"
+                                />
+                              ) : (
+                                <UserPlus size={16} className="inline mr-2" />
+                              )}
+                              Connect with {profileData?.nickname}
+                            </button>
+                            <button className="w-full bg-transparent border border-teal-500 hover:bg-teal-800/20 py-2 rounded-md text-teal-400 font-medium transition-colors">
+                              <Send size={16} className="inline mr-2" />
+                              Send Message
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </>
                   )}
@@ -499,74 +793,110 @@ export default function StudyProfilePage() {
                   </div>
 
                   {/* Friend Requests */}
-                  {
-                    isAuthor && (
-                      <div className="bg-gray-800/60 rounded-lg p-4 mb-6">
-                    <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-                      <UserPlus size={18} />
-                      Friend Requests ({profileData?.friendRequests.length})
-                    </h3>
+                  {isAuthor && (
+                    <div className="bg-gray-800/60 rounded-lg p-4 mb-6">
+                      <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
+                        <UserPlus size={18} />
+                        Friend Requests ({profileData?.friendRequests.length})
+                      </h3>
 
-                    <div className="space-y-4">
-                      {profileData?.friendRequests.map((request) => (
-                        <div
-                          key={request.id}
-                          className="flex items-center gap-3"
-                        >
-                          <img
-                            src={request.picture}
-                            alt={request.name}
-                            className="w-8 h-8 rounded-full"
-                          />
-                          <span className="text-sm flex-1">{request.name}</span>
-                          <div className="flex gap-1">
-                            <button className="p-1 bg-teal-600 hover:bg-teal-700 rounded text-xs">
-                              Accept
-                            </button>
-                            <button className="p-1 bg-gray-700 hover:bg-gray-600 rounded text-xs">
-                              Ignore
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                      <div className="space-y-4">
+                        {incomingRequest.length > 0 &&
+                          incomingRequest.map((request) => (
+                            <div
+                              key={request.sender.id}
+                              className="flex items-center gap-3"
+                            >
+                              <Avatar className={"w-8 h-8"}>
+                                <AvatarImage
+                                  src={request.sender.profilePicture.url}
+                                />
+                                <AvatarFallback>
+                                  {request.sender.username}
+                                </AvatarFallback>
+                              </Avatar>
+                              <Link
+                                className="text-md flex-1 cursor-pointer hover:underline"
+                                to={`/profile/${request.sender.id}`}
+                              >
+                                {request.sender.username}
+                              </Link>
+                              <div className="flex gap-1">
+                                <Button
+                                  className=" bg-teal-600 hover:bg-teal-700 rounded cursor-pointer"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleAcceptRequest(request.sender.id)
+                                  }
+                                  disabled={messageLoading}
+                                >
+                                  {messageLoading ? "Accepting..." : "Accept"}
+                                </Button>
+                                <Button
+                                  className=" bg-gray-700 hover:bg-gray-600 rounded cursor-pointer"
+                                  variant={"outline"}
+                                  size="sm"
+                                  onClick={() =>
+                                    handleRejectRequest(request.sender.id)
+                                  }
+                                  disabled={actionLoading}
+                                >
+                                  {actionLoading ? "Rejecting..." : "Reject"}
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
                     </div>
-                  </div>
-                    )
-                  }
+                  )}
 
                   {/* Sent Requests */}
-                 {
-                  isAuthor && (
-                     <div className="bg-gray-800/60 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-                      <Send size={18} />
-                      Sent Requests ({profileData?.sentRequests?.length || 0})
-                    </h3>
+                  {isAuthor && (
+                    <div className="bg-gray-800/60 rounded-lg p-4">
+                      <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
+                        <Send size={18} />
+                        Sent Requests (
+                        {profileData?.sentFriendRequests?.length || 0})
+                      </h3>
 
-                    <div className="space-y-3">
-                      {profileData?.sentRequests &&
-                        profileData.sentRequests.map((request) => (
-                          <div
-                            key={request.id}
-                            className="flex items-center gap-3"
-                          >
-                            <img
-                              src={request.picture}
-                              alt={request.name}
-                              className="w-8 h-8 rounded-full"
-                            />
-                            <span className="text-sm flex-1">
-                              {request.name}
-                            </span>
-                            <button className="p-1 bg-gray-700 hover:bg-gray-600 rounded text-xs">
-                              Cancel
-                            </button>
-                          </div>
-                        ))}
+                      <div className="space-y-3">
+                        {sendRequest?.length > 0 &&
+                          sendRequest.map((request) => (
+                            <div
+                              key={request.reciever.id}
+                              className="flex items-center gap-3"
+                            >
+                              <img
+                                src={request.reciever.profilePicture.url}
+                                alt={request.reciever.username}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                              <Link
+                                className="text-sm flex-1"
+                                to={`/profile/${request.reciever.id}`}
+                              >
+                                {request.reciever.username}
+                              </Link>
+                              <Button
+                                className=""
+                                variant="outline"
+                                size="sm"
+                                disabled={cancelLoading}
+                                onClick={() =>
+                                  handleCancelRequest(request.reciever.id)
+                                }
+                              >
+                                {cancelLoading ? (
+                                  <Loader2 className="animate-spin text-xs text-center mx-auto " />
+                                ) : (
+                                  "Cancel"
+                                )}
+                              </Button>
+                            </div>
+                          ))}
+                      </div>
                     </div>
-                  </div>
-                  )
-                 }
+                  )}
                 </div>
               </div>
             </div>

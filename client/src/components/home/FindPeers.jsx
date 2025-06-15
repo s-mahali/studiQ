@@ -110,9 +110,7 @@ const FindPeers = ({ className }) => {
           console.log("peers", response?.data.peerlist);
           setPeersData(response?.data.peerlist);
           if (response?.data.pendingRequests.length > 0) {
-            setSentRequestIds(
-              response?.data.pendingRequests.map((request) => request._id)
-            );
+            setSentRequestIds(response?.data.pendingRequests);
           }
           dispatch(setPeers(response?.data.peerlist));
           toast.success(response?.data.message);

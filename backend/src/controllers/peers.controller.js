@@ -15,28 +15,26 @@ export const suggestPeers = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("User not found", 404));
   }
 
-  //Get IDs of users which need to exclude from suggestion
-
-
   try {
+    //Get IDs of users which need to exclude from suggestion
+    const friendIds = user.friends.map((friend) => friend.user.toString());
+    const receivedRequestIds = user.friendRequests.map((req) =>
+      req.from.toString()
+    );
+    const sentRequestIds = user.sentFriendRequests.map((req) =>
+      req.to.toString()
+    );
+
+    const excludeIds = [
+      userId.toString(),
+      ...friendIds,
+      ...receivedRequestIds,
+      ...sentRequestIds,
+    ];
+
     let getPeerlist = await User.find({
-      _id: { $ne: userId },
-      freinds: {
-        user: {
-          $ne: userId,
-        },
-      },
-      friendRequests: {
-        from: {
-          $ne: userId,
-        },
-      },
-      sentFriendRequests: {
-        to: {
-          $ne: userId,
-        },
-      },
-      accountVerified: true,
+      _id: { $nin: excludeIds },
+      ccountVerified: true,
 
       $or: [
         {
@@ -61,50 +59,30 @@ export const suggestPeers = catchAsyncError(async (req, res, next) => {
 
     console.log("peerlist", getPeerlist);
 
-    if (getPeerlist.length > 2) {
-      res.status(200).json({
-        success: true,
-        peerlist: getPeerlist,
-        message: "Peerlist fetcheding successfully",
-        pendingRequests: getPeerlist.map((peer) => peer.friendRequests),
-        page,
-        total: getPeerlist.length,
-      });
-    } else {
+    if (getPeerlist.length < 3) {
+      console.log("Not enough matching peers, fetching any available users");
       getPeerlist = await User.find({
-        _id: { $ne: userId },
-        freinds: {
-          user: {
-            $ne: userId,
-          },
-        },
-        freindRequests: {
-          from: {
-            $ne: userId,
-          },
-        },
-        sentFriendRequests: {
-          to: {
-            $ne: userId,
-          },
-        },
+        _id: { $nin: excludeIds },
         accountVerified: true,
       })
-        .select(
-          "profilePicture username skills subjects  nickname friendRequests"
-        )
+        .select("profilePicture username skills subjects nickname")
         .sort({ createdAt: -1 })
         .limit(limit)
         .skip(skip);
-      console.log("peerlist", getPeerlist);
-      return res.status(200).json({
-        success: true,
-        peerlist: getPeerlist,
-        pendingRequests: getPeerlist.map((peer) => peer.friendRequests),
-        message: "Peerlist fetched successfully",
-        page,
-      });
     }
+
+    //pendingRequestsIds
+    const pendingRequestIds = user.sentFriendRequests
+      .filter((req) => req.status === "pending")
+      .map((req) => req.to.toString());
+    return res.status(200).json({
+      success: true,
+      peerlist: getPeerlist.length > 0 ? getPeerlist : [],
+      message: "Peerlist fetched successfully",
+      pendingRequests: pendingRequestIds,
+      page,
+      total: getPeerlist.length,
+    });
   } catch (error) {
     console.log(error.message);
     return next(new ErrorHandler("something went wrong", 500));
@@ -128,7 +106,7 @@ export const getAllPeers = catchAsyncError(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    peers,
+    peers: peers.length > 0 ? peers : [],
   });
 });
 
@@ -208,14 +186,26 @@ export const getSendFriendRequest = catchAsyncError(async (req, res, next) => {
   }
   const requests = await User.findById(userId)
     .select("sentFriendRequests")
+    .limit(5)
+    .sort({ createdAt: 1 })
     .populate("sentFriendRequests.to", "username profilePicture");
-
-  if (requests.length > 0) {
+  
+  const formattedRequests = requests.sentFriendRequests.map((request) => ({
+    requestId: request._id.toString(),
+    reciever: {
+      id: request.to._id,
+      username: request.to.username,
+      profilePicture: request.to.profilePicture,
+      status: request.status,
+    },
+  }));
+  if (formattedRequests.length >= 0) {
     return res.status(200).json({
       success: true,
-      payload: requests,
+      payload: formattedRequests || [],
       message: "Friend requests fetched successfully",
     });
+   
   } else {
     return res.status(400).json({
       success: false,
@@ -224,29 +214,49 @@ export const getSendFriendRequest = catchAsyncError(async (req, res, next) => {
   }
 });
 
-export const deleteSendFriendRequest = catchAsyncError(
+export const cancelSentFriendRequest = catchAsyncError(
   async (req, res, next) => {
     const userId = req.user._id;
-    const { reqSenderId } = req.body;
+    const { sentUserId } = req.body;
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return next(new ErrorHandler("unauthorized", 401));
-    }
+
+
+     //validate both users exist
+  const [user, sentUser] = await Promise.all([
+    User.findById(userId),
+    User.findById(sentUserId),
+  ]);
+
+  if (!user || !sentUser) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+  
+ const isRequestSent = user.sentFriendRequests.some(
+    (request) =>
+      request.to.toString() === sentUserId &&
+      request.status === "pending"
+  );
+
+  if (!isRequestSent) {
+    return next(new ErrorHandler("Friend request not found", 404));
+  }
+    
     const updateUser = await User.findByIdAndUpdate(
       userId,
       {
         $pull: {
           sentFriendRequests: {
-            to: reqSenderId,
+            to: sentUserId,
           },
         },
       },
       { new: true }
     );
 
+    
+
     const updateUser2 = await User.findByIdAndUpdate(
-      reqSenderId,
+      sentUserId,
       {
         $pull: {
           friendRequests: {
@@ -257,10 +267,12 @@ export const deleteSendFriendRequest = catchAsyncError(
       { new: true }
     );
 
+    
+
     return res.status(200).json({
       success: true,
       message: "Friend request deleted successfully",
-      data: null,
+      payload: null,
     });
   }
 );
@@ -282,7 +294,7 @@ export const acceptFriendRequest = catchAsyncError(async (req, res, next) => {
   //find the specific friendRequst
   const reqIndex = accepter.friendRequests.findIndex(
     (req) =>
-      req.from.toString() === reqSenderId.toString() && req.status === "pending"
+      req.from.toString() === reqSenderId && req.status === "pending"
   );
 
   if (reqIndex === -1) {
@@ -332,7 +344,7 @@ export const acceptFriendRequest = catchAsyncError(async (req, res, next) => {
   }
 });
 
-export const getAcceptFriendRequest = catchAsyncError(
+export const getIncomingFriendRequest = catchAsyncError(
   async (req, res, next) => {
     const userId = req.user._id;
 
@@ -340,19 +352,35 @@ export const getAcceptFriendRequest = catchAsyncError(
     if (!user) {
       return next(new ErrorHandler("unauthorized", 401));
     }
-    const requests = await User.findById(userId)
-      .select("friendRequests")
-      .populate("friendRequests.from", "username profilePicture");
 
-    if (requests.length > 0) {
+    const userData = await User.findById(userId)
+      .select("friendRequests")
+      .populate("friendRequests.from", "username profilePicture nickname");
+
+    const formattedRequests = userData.friendRequests.map((request) => ({
+      requestId: request._id,
+      sender: {
+        id: request.from._id,
+        username: request.from.username,
+        profilePicture: request.from.profilePicture,
+        nickname: request.from.nickname,
+      },
+      status: request.status,
+      createdAt: request.createdAt,
+    }));
+
+    if (formattedRequests.length > 0) {
       return res.status(200).json({
         success: true,
-        requests,
+        requests: formattedRequests,
+        count: formattedRequests.length,
         message: "Friend requests fetched successfully",
       });
     } else {
-      return res.status(400).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
+        requests: [],
+        count: 0,
         message: "No friend requests found",
       });
     }
@@ -369,6 +397,7 @@ export const rejectFriendRequest = catchAsyncError(async (req, res, next) => {
     User.findById(reqSenderId),
   ]);
 
+
   if (!rejecter || !sender) {
     return next(new ErrorHandler("User not found", 404));
   }
@@ -376,8 +405,9 @@ export const rejectFriendRequest = catchAsyncError(async (req, res, next) => {
   //find the specific friendRequst
   const reqIndex = rejecter.friendRequests.findIndex(
     (req) =>
-      req.from.toString() === reqSenderId.toString() && req.status === "pending"
+      req.from.toString() === reqSenderId && req.status === "pending"
   );
+  console.log("reqIndex", reqIndex);
 
   if (reqIndex === -1) {
     return next(new ErrorHandler("Friend Request not found", 404));

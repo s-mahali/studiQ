@@ -53,3 +53,30 @@ export const sendConnectionToPeers = async (receiverId) => {
     return response;
 }
 
+export const getIncomingFriendRequests = async () => {
+    const response = await serviceAxiosInstance.get("/peers/incoming-request");
+    return response;
+}
+//get sent friend requests
+export const fetchSendRequests = async () => {
+    const response = await serviceAxiosInstance.get("/peers/sent-request");
+    return response;
+}
+
+//accept friend request
+export const acceptFriendRequest = async (data) => {
+    const response = await serviceAxiosInstance.put("/peers/acceptrequest", data);
+    return response;
+}
+
+//reject-friend-request
+export const rejectFriendRequest = async (data) => {
+    const response = await serviceAxiosInstance.patch("/peers/reject-request", data);
+    return response;
+}
+
+//cancel-sent-request
+export const cancelSentRequest = async (data) => {
+    const response = await serviceAxiosInstance.patch("/peers/cancel-sent-request", data);
+    return response;
+}

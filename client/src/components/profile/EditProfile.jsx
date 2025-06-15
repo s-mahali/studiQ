@@ -172,7 +172,7 @@ const EditProfile = () => {
         toast.success(res.data.message);
         
         navigate(`/profile/${user._id}`);
-        dispatch(setAuthUser(res.data.user));
+       
       }
     } catch (err) {
       console.log(err);
