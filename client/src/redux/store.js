@@ -1,6 +1,9 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import themeSlice from "./slicers/ThemeSlice";
 import authSlice from "./slicers/authSlice";
+import socketSlice from "./slicers/socketSlice";
+import chatSlice from "./slicers/chatSlice";
+
 
 import {
 
@@ -25,6 +28,8 @@ const persistConfig = {
 const rootReducer = combineReducers({
   theme: themeSlice,
   auth: authSlice,
+  socketio: socketSlice,
+  chat: chatSlice
  
 })
 

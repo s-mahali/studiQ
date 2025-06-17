@@ -1,5 +1,5 @@
-import React from "react";
-import { createBrowserRouter, RouterProvider} from "react-router-dom";
+import React, { useEffect } from "react";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import HomePage from "./pages/Home.page";
 import SignupPage from "./pages/Signup.page";
@@ -10,50 +10,81 @@ import Layout from "./lib/Layout";
 import FindPeersPage from "./pages/FindPeers.page";
 import StudyProfilePage from "./components/profile/UserProfile";
 import EditProfilePage from "./pages/EditProfilePage";
-
-
+import { io } from "socket.io-client";
+import { useDispatch, useSelector } from "react-redux";
+import { setSocket } from "./redux/slicers/socketSlice";
+import { setOnlineUsers } from "./redux/slicers/chatSlice";
 
 const browserRouter = createBrowserRouter([
   {
     path: "/",
-    element: <HomePage/>,
+    element: <HomePage />,
     children: [
-         {
-          path: "/",
-          element: <Layout/>
-         },
-         {
-          path: "/find-peers",
-          element: <FindPeersPage/>
-         },
-         {
-          path: "/profile/:userId",
-          element: <StudyProfilePage/>
-         },
-         {
-          path: "/edit-profile",
-          element: <EditProfilePage/>
-         }
-    ]
+      {
+        path: "/",
+        element: <Layout />,
+      },
+      {
+        path: "/find-peers",
+        element: <FindPeersPage />,
+      },
+      {
+        path: "/profile/:userId",
+        element: <StudyProfilePage />,
+      },
+      {
+        path: "/edit-profile",
+        element: <EditProfilePage />,
+      },
+    ],
   },
   {
     path: "/signup",
-    element: <SignupPage/>
+    element: <SignupPage />,
   },
   {
     path: "/login",
-    element: <LoginPage/>
-  },{
+    element: <LoginPage />,
+  },
+  {
     path: "/verify-email",
-    element: <VerifyEmail/>
-  }
-])
+    element: <VerifyEmail />,
+  },
+]);
 
 const App = () => {
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
+  const { socket } = useSelector(store.socketio);
+  useEffect(() => {
+    if (user) {
+      const socketio = io("http://localhost:8080", {
+        query: {
+          userId: user._id,
+        },
+        transports: ["websocket"],
+      });
+      console.log("socketioClient", socketio);
+      dispatch(setSocket(socketio));
+      //listen all the events
+      socketio.on("getOnlineUsers", (onlineUsers) => {
+        dispatch(setOnlineUsers(onlineUsers));
+      });
+
+      return () => {
+        socketio.close();
+        dispatch(setSocket(null));
+      };
+    } else if (socket) {
+      socket?.close();
+      dispatch(setSocket(null));
+    }
+  }, [user, dispatch]);
+
   return (
     <>
       <RouterProvider router={browserRouter} />
-      <Toaster/>
+      <Toaster />
     </>
   );
 };
