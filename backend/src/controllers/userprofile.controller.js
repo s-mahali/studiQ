@@ -5,25 +5,9 @@ import {
 } from "../service/user.service.js";
 import ErrorHandler from "../middlewares/error.middleware.js";
 import { z } from "zod";
-import multer from "multer";
 import User from "../models/user.model.js";
 
-//configure multer for memory storage
-const storage = multer.memoryStorage();
-export const upload = multer({
-  storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5 mb limit
-  },
-  fileFilter: (req, file, cb) => {
-    //accept only images
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      cb(new Error("only image files are allowed"), false);
-    }
-  },
-});
+
 
 //schema validation
 const updateUserSchema = z.object({

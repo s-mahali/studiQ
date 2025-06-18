@@ -37,7 +37,7 @@ const LeftSideBar = () => {
     {
       icon: <BookOpen size={22} />,
       text: "StudyZone",
-      path: "/studyzone"
+      path: "/study-zone"
     },
     {
       icon: <UserLock />,
@@ -59,7 +59,7 @@ const LeftSideBar = () => {
   return (
    <>
    {/* Desktop sidebar */}
-    <div className="hidden md:flex flex-col items-center w-16 h-screen fixed left-0 top-0 bg-gray-900 border-r border-gray-800 py-4">
+    <div className="hidden md:flex flex-col items-center w-16 h-screen fixed left-0 top-0 bg-gray-900 py-4 border-r-2">
     <div className="flex flex-col items-center space-y-6 w-full">
       {
         sidebarItems.map((item, index) => {

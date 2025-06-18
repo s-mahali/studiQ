@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import HomePage from "./pages/Home.page";
@@ -14,6 +14,8 @@ import { io } from "socket.io-client";
 import { useDispatch, useSelector } from "react-redux";
 import { setSocket } from "./redux/slicers/socketSlice";
 import { setOnlineUsers } from "./redux/slicers/chatSlice";
+import StudyZonePage from "./pages/StudyZonePage";
+
 
 const browserRouter = createBrowserRouter([
   {
@@ -36,6 +38,10 @@ const browserRouter = createBrowserRouter([
         path: "/edit-profile",
         element: <EditProfilePage />,
       },
+      {
+        path: "/study-zone",
+        element: <StudyZonePage/>
+      },
     ],
   },
   {
@@ -55,15 +61,17 @@ const browserRouter = createBrowserRouter([
 const App = () => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
-  const { socket } = useSelector(store.socketio);
+  const  socket = useSelector((state) => state.socketio.socketio);
   useEffect(() => {
     if (user) {
-      const socketio = io("http://localhost:8080", {
+      const socketio = 
+          io("http://localhost:8080", {
         query: {
           userId: user._id,
         },
         transports: ["websocket"],
       });
+      
       console.log("socketioClient", socketio);
       dispatch(setSocket(socketio));
       //listen all the events

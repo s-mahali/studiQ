@@ -1,7 +1,7 @@
 import express from 'express';
 import {isAuthenticated} from '../middlewares/auth.middleware.js';
 import { getUserProfileById, updateUserProfile, uploadProfilePic } from '../controllers/userprofile.controller.js';
-import {upload} from '../controllers/userprofile.controller.js';
+import {upload} from "../utils/multer.js";
 
 export const userProfileRouter = express.Router();
 userProfileRouter.put('/profile', isAuthenticated,  updateUserProfile)

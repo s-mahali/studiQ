@@ -3,7 +3,8 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   user: null,
   status: false,
-  peers: []
+  peers: [],
+  members: [],
   
 };
 
@@ -21,8 +22,12 @@ const authSlice = createSlice({
     setPeers: (state, action) => {
        state.peers = action.payload;
     },
+
+    setMembers: (state, action) => {
+      state.members = action.payload;
+    }
     
   },
 });
-export const { setAuthUser,setStatus, setPeers} = authSlice.actions;
+export const { setAuthUser,setStatus, setPeers, setMembers} = authSlice.actions;
 export default authSlice.reducer;

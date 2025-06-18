@@ -105,9 +105,8 @@ const userSchema = new mongoose.Schema(
     ],
     groups: [
       {
-        group: { type: mongoose.Schema.Types.ObjectId, ref: "Group" },
-        role: { type: String, enum: ["admin", "member"], default: "member" },
-        joinedAt: { type: Date, default: Date.now },
+        groupId: { type: mongoose.Schema.Types.ObjectId, ref: "Group" },
+       
       },
     ],
 
@@ -144,7 +143,6 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.index({ "subjects.name": 1 });
-userSchema.index({ "goals.status": 1 });
 userSchema.index({ "friends.status": 1 });
 
 userSchema.pre("save", async function (next) {

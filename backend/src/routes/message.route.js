@@ -1,8 +1,8 @@
 import {Router} from "express";
-import { isAuthenticated } from "../middlewares/auth.middleware";
-import { errorMiddleware } from "../middlewares/error.middleware";
-import { catchAsyncError } from "../middlewares/catchAsyncError.middleware";
-import { getMessage, sendMessage } from "../controllers/message.controller";
+import { isAuthenticated } from "../middlewares/auth.middleware.js";
+import { errorMiddleware } from "../middlewares/error.middleware.js";
+import { catchAsyncError } from "../middlewares/catchAsyncError.middleware.js";
+import { getMessage, sendMessage } from "../controllers/message.controller.js";
 
 export const messageRouter = Router();
 messageRouter.use(isAuthenticated);
