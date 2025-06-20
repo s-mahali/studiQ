@@ -80,3 +80,14 @@ export const cancelSentRequest = async (data) => {
     const response = await serviceAxiosInstance.patch("/peers/cancel-sent-request", data);
     return response;
 }
+
+//dm friends 
+export const sendDm = async (data, receiverId) => {
+     const response = await serviceAxiosInstance.post(`/chat/message/${receiverId}`, data);
+     return response;
+}
+
+export const fetchDm = async (receiverId) => {
+     const response = await serviceAxiosInstance.get(`/chat/message/${receiverId}`);
+     return response;
+}

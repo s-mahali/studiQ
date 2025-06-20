@@ -242,7 +242,7 @@ export default function StudyProfilePage() {
         profileData.friends.length > 0 &&
         profileData.friends.some(
           (friend) =>
-            friend.user.toString() == authorId.toString() ||
+            friend.user._id.toString() == authorId.toString() ||
             (friend.user._id && friend.user._id == authorId)
         );
       console.log("isFriend", isFriend);
@@ -662,10 +662,12 @@ export default function StudyProfilePage() {
                               <Users size={16} className="inline mr-2" />
                               You and {profileData?.username} are friends
                             </div>
-                            <button className="w-full bg-transparent border border-teal-500 hover:bg-teal-800/20 py-2 rounded-md text-teal-400 font-medium transition-colors">
+                            <Link to={`/dm/${userId}`}>
+                             <button className="w-full bg-transparent border border-teal-500 hover:bg-teal-800/20 py-2 rounded-md text-teal-400 font-medium transition-colors">
                               <Send size={16} className="inline mr-2" />
                               Send Message
                             </button>
+                            </Link>
                           </div>
                         ) : relationshipStatus === "incoming" ? (
                           <div className="flex gap-2 flex-col">
@@ -758,7 +760,7 @@ export default function StudyProfilePage() {
                       <Users size={18} />
                       Friends (
                       {profileData?.friends.length > 0
-                        ? profileData?.friends.length - 1
+                        ? profileData?.friends.length
                         : "No friends yet"}
                       )
                     </h3>
@@ -769,10 +771,10 @@ export default function StudyProfilePage() {
                           key={friend.id}
                           className="flex items-center gap-3"
                         >
-                          {friend.picture ? (
+                          {friend.user.profilePicture ? (
                             <img
-                              src={friend.picture}
-                              alt={friend.name}
+                              src={friend.user.profilePicture.url}
+                              alt={friend.user.username}
                               className="w-8 h-8 rounded-full"
                             />
                           ) : (
@@ -780,7 +782,7 @@ export default function StudyProfilePage() {
                               +
                             </div>
                           )}
-                          <span className="text-sm">{friend.name}</span>
+                          <Link to={`/profile/${friend.user._id.toString()}`} className="text-sm">{friend.user.username}</Link>
                         </div>
                       ))}
                     </div>

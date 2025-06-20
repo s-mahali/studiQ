@@ -15,7 +15,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { setSocket } from "./redux/slicers/socketSlice";
 import { setOnlineUsers } from "./redux/slicers/chatSlice";
 import StudyZonePage from "./pages/StudyZonePage";
-
+import Dm from "./components/dm/dm";
 
 const browserRouter = createBrowserRouter([
   {
@@ -40,7 +40,12 @@ const browserRouter = createBrowserRouter([
       },
       {
         path: "/study-zone",
-        element: <StudyZonePage/>
+        element: <StudyZonePage />,
+      },
+
+      {
+        path: "/dm/:receiverId",
+        element: <Dm />,
       },
     ],
   },
@@ -61,17 +66,16 @@ const browserRouter = createBrowserRouter([
 const App = () => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
-  const  socket = useSelector((state) => state.socketio.socketio);
+  const socket = useSelector((state) => state.socketio.socket);
   useEffect(() => {
     if (user) {
-      const socketio = 
-          io("http://localhost:8080", {
+      const socketio = io("http://localhost:8080", {
         query: {
           userId: user._id,
         },
         transports: ["websocket"],
       });
-      
+
       console.log("socketioClient", socketio);
       dispatch(setSocket(socketio));
       //listen all the events

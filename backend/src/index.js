@@ -9,6 +9,7 @@ import { removeUnverifiedAccount } from "./automation/removeUnverifiedAccount.js
 import { peersRouter } from "./routes/peers.route.js";
 import { userProfileRouter } from "./routes/userprofile.route.js";
 import { messageRouter } from "./routes/message.route.js";
+import { groupRouter } from "./routes/group.route.js";
 dotenv.config();
 
 
@@ -32,6 +33,7 @@ app.use("/api/user", userRouter);
 app.use("/api/peers", peersRouter);
 app.use("/api/userprofile", userProfileRouter);
 app.use("/api/chat", messageRouter);
+app.use("/api/group", groupRouter);
 
 removeUnverifiedAccount(); // Start the cron job to remove unverified accounts
 

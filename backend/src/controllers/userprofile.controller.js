@@ -7,8 +7,6 @@ import ErrorHandler from "../middlewares/error.middleware.js";
 import { z } from "zod";
 import User from "../models/user.model.js";
 
-
-
 //schema validation
 const updateUserSchema = z.object({
   subjects: z
@@ -94,13 +92,18 @@ export const uploadProfilePic = catchAsyncError(async (req, res, next) => {
 export const getUserProfileById = catchAsyncError(async (req, res, next) => {
   const { userId } = req.params;
 
-  const user = await User.findById(userId);
+  const user = await User.findById(userId)
+    .populate("friends.user", "username profilePicture")
+    .populate("friendRequests.from", "username profilePicture")
+    .populate("sentFriendRequests.to", "username profilePicture")
+    .exec();
   if (!user) {
     return res.status(404).json({
       success: false,
       message: "User not found!",
     });
   }
+
   console.log("user", user);
 
   return res.status(200).json({

@@ -39,6 +39,7 @@ export const sendMessage = async (req, res) => {
   return res.status(200).json({
     success: true,
     message: "Message sent successfully",
+    payload: newMessage,
   });
 };
 
@@ -111,5 +112,57 @@ export const sendGroupMessage = async (req, res, next) => {
   return res.status(201).json({
     success: true,
     message: "Message sent successfully",
+  });
+};
+
+export const getGroupMessage = async (req, res, next) => {
+  const { groupId, channelName = "general" } = req.params;
+  const { page = 1, limit = 50 } = req.query;
+  const skip = (page - 1) * limit;
+
+  const group = await Group.findById(groupId);
+  if (!group) {
+    return next(new ErrorHandler("Group not found", 404));
+  }
+
+  const isMember = group.members.some(
+    (member) => member.userId.toString() === req.user._id.toString()
+  );
+  if (!isMember) {
+    return next(new ErrorHandler("Not authorized to get messages", 403));
+  }
+
+  const channel = group.channels.find((c) => c.name === channelName.trim());
+  if (!channel) {
+    return res.status(200).json({
+      success: true,
+      messages: [],
+      totalCounts: 0,
+    });
+  }
+
+  //Get Message with pagination
+  const messageQuery = await Message.find({
+    _id: {
+      $in: channel.messages,
+    },
+  })
+    .populate("sender", "username profilePicture")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const countQuery = Message.countDocuments({
+    _id: {
+      $in: channel.messages,
+    },
+  });
+
+  const [messages, totalCounts] = await Promise.all([messageQuery, countQuery]);
+
+  return res.status(200).json({
+    success: true,
+    messages: messages.reverse(),
+    totalCounts,
   });
 };

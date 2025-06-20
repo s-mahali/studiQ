@@ -1,5 +1,6 @@
 import ErrorHandler from "../middlewares/error.middleware.js";
 import Group from "../models/group.model.js";
+import Message from "../models/message.model.js";
 import User from "../models/user.model.js";
 
 export const createGroup = async (req, res, next) => {
@@ -35,13 +36,19 @@ export const createGroup = async (req, res, next) => {
     title,
     description,
     createdBy: userId,
+    members: [
+      {
+        userId: user._id,
+        role: "owner",
+      },
+    ],
   });
 
   //update user
   await User.findByIdAndUpdate(
     userId,
     {
-      $push: { groups: { groupId: newGroup._id, role: "owner" } },
+      $push: { groups: { groupId: newGroup._id } },
     },
     {
       new: true,
@@ -135,12 +142,20 @@ export const deleteGroup = async (req, res, next) => {
     await imageKit.deleteFile(existingGroup.coverImage.fileId);
   }
 
-  //let groupChat = []; need to delete all group chat messages
-  //delete group from users
-  await User.updateMany(
-    { groups: { $elemMatch: { groupId: groupId } } },
-    { $pull: { groups: { groupId: groupId } } }
-  );
+  //delete all group chat
+  await Message.findByIdAndDelete({
+    _id: {
+      $in: existingGroup.channels.messages,
+    },
+  });
+
+  await User.updateMany({
+    groupId,
+
+    $pull: {
+      groups: groupId,
+    },
+  });
 
   await Group.findByIdAndDelete(groupId);
   return res.status(200).json({
@@ -149,27 +164,33 @@ export const deleteGroup = async (req, res, next) => {
   });
 };
 
-export const  getGroupById = async (req, res, next) => {
-    const { groupId } = req.params;
-    const group = await Group.findById(groupId).populate({path: "members", select: "username profilePicture"});
-    if (!group) {
-      return next(new ErrorHandler("Group not found", 404));
-    }
-    return res.status(200).json({
-      success: true,
-      message: "Group fetched successfully",
-      payload: group,
-    });
-}
+export const getGroupById = async (req, res, next) => {
+  const { groupId } = req.params;
+  const group = await Group.findById(groupId).populate({
+    path: "members",
+    select: "username profilePicture",
+  });
+  if (!group) {
+    return next(new ErrorHandler("Group not found", 404));
+  }
+  return res.status(200).json({
+    success: true,
+    message: "Group fetched successfully",
+    payload: group,
+  });
+};
 
 export const getGroups = async (req, res, next) => {
-  const groups = await Group.find().populate({path: "members", select: "username profilePicture"});
+  const groups = await Group.find().populate({
+    path: "members",
+    select: "username profilePicture",
+  });
   return res.status(200).json({
     success: true,
     message: "Groups fetched successfully",
     payload: groups.length > 0 ? groups : [],
   });
-}
+};
 
 export const getUserJoinedGroups = async (req, res, next) => {
   const userId = req.user._id;
@@ -177,12 +198,55 @@ export const getUserJoinedGroups = async (req, res, next) => {
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
   }
+  // not clear which group It will return
   const groups = await Group.find({
-     members: groups.members.filter((member) => member._id.toString() !== userId.toString()),
-  })
+    members: groups.members.filter(
+      (member) => member.userId.toString() !== userId.toString()
+    ),
+  });
   return res.status(200).json({
     success: true,
     message: "Groups fetched successfully",
     payload: groups.length > 0 ? groups : [],
   });
-}
+};
+
+export const addMemberToGroup = async (req, res, next) => {
+  const { joinKarnewalaKaID, groupId } = req.body;
+  if (!joinKarnewalaKaID) {
+    return next(new ErrorHandler("User required", 401));
+  }
+  const joinKarneWalaCandidate = await User.findById(joinKarnewalaKaID);
+  const group = await Group.findById(groupId);
+  const groupOwnerId = group.createdBy.toString();
+  if (!group) {
+    return next(new ErrorHandler("Group not Found", 404));
+  }
+
+  const isFriend = joinKarneWalaCandidate.friends.some(
+    (user) => user.toString() === groupOwnerId
+  );
+
+  if (!isFriend) {
+    return next(new ErrorHandler("Please Make Connection First", 403));
+  }
+
+  const isAlreadyMember = group.members.some(
+    (member) => member.userId.toString() === joinKarnewalaKaID
+  );
+
+  if (isAlreadyMember) {
+    return next(new ErrorHandler("User already a member", 400));
+  }
+
+  group.members.push({ userId: joinKarnewalaKaID });
+  //TODO: send notification to user that he has been added to group
+  await group.save();
+  return res.status(200).json({
+    success: true,
+    message: "User Added to Group Successfully",
+  });
+};
+
+// kick member from group
+//leave group 
