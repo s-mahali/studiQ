@@ -91,3 +91,4 @@ export const fetchDm = async (receiverId) => {
      const response = await serviceAxiosInstance.get(`/chat/message/${receiverId}`);
      return response;
 }
+

@@ -10,6 +10,9 @@ import { peersRouter } from "./routes/peers.route.js";
 import { userProfileRouter } from "./routes/userprofile.route.js";
 import { messageRouter } from "./routes/message.route.js";
 import { groupRouter } from "./routes/group.route.js";
+import { errorMiddleware } from "./middlewares/error.middleware.js";
+import { successHandlerMiddleware } from "./middlewares/success.middleware.js";
+
 dotenv.config();
 
 
@@ -29,11 +32,15 @@ app.use(cookieParser()); // Middleware to parse cookies
 app.get("/", (req, res) => {
   res.send("Hello, World!");
 });
+
+app.use(successHandlerMiddleware);
 app.use("/api/user", userRouter);
 app.use("/api/peers", peersRouter);
 app.use("/api/userprofile", userProfileRouter);
 app.use("/api/chat", messageRouter);
 app.use("/api/group", groupRouter);
+
+app.use(errorMiddleware) // global error handler
 
 removeUnverifiedAccount(); // Start the cron job to remove unverified accounts
 

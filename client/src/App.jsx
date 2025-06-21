@@ -71,7 +71,7 @@ const App = () => {
     if (user) {
       const socketio = io("http://localhost:8080", {
         query: {
-          userId: user._id,
+          userId: user?._id,
         },
         transports: ["websocket"],
       });
@@ -81,6 +81,10 @@ const App = () => {
       //listen all the events
       socketio.on("getOnlineUsers", (onlineUsers) => {
         dispatch(setOnlineUsers(onlineUsers));
+      });
+
+      socketio.on("connect_error", (error) => {
+        console.error("Socket connection error:", error);
       });
 
       return () => {

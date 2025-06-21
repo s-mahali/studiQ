@@ -3,11 +3,14 @@ import Conversation from "../models/conversation.model.js";
 import { getReceiverSocketId, io } from "../socket/socket.js";
 import ErrorHandler from "../middlewares/error.middleware.js";
 import Group from "../models/group.model.js";
+import { catchAsyncError } from "../middlewares/catchAsyncError.middleware.js";
 
-export const sendMessage = async (req, res) => {
+
+export const sendMessage = catchAsyncError(async (req, res) => {
   const senderId = req.user._id;
   const receiverId = req.params.id;
   const { message } = req.body;
+  console.log("message", message);
 
   let conversation = await Conversation.findOne({
     participants: {
@@ -24,43 +27,61 @@ export const sendMessage = async (req, res) => {
     sender: senderId,
     receiver: receiverId,
     content: message,
-  });
+  })
+   
+  console.log("new Message malik", newMessage);
   if (newMessage) {
     conversation.messages.push(newMessage._id);
   }
 
   await Promise.all([newMessage.save(), conversation.save()]);
+  await newMessage.populate([
+    { path: "sender", select: "username profilePicture" },
+    { path: "receiver", select: "username profilePicture" }
+  ]);
+  
   // socket.io for real time communication
   const receiverSocketId = getReceiverSocketId(receiverId);
   if (receiverSocketId) {
     io.to(receiverSocketId).emit("newMessage", newMessage);
   }
 
+  console.log("...............", newMessage); 
+
   return res.status(200).json({
     success: true,
     message: "Message sent successfully",
     payload: newMessage,
   });
-};
 
-export const getMessage = async (req, res, next) => {
+});
+
+export const getMessage =  catchAsyncError(async (req, res, next) => {
   const senderId = req.user._id;
   const receiverId = req.params.id;
   const conversation = await Conversation.findOne({
     participants: {
       $all: [senderId, receiverId],
     },
-  }).populate("messages");
+  }).populate({
+      path: "messages",
+      populate: {
+        path: "sender",
+        select: "username profilePicture",
+      }
+  }).populate({
+      path: "messages",
+      populate: {
+        path: "receiver",
+        select: "username profilePicture",
+      }
+  })
   console.log("conversationMessage", conversation?.messages);
   if (!conversation) {
     return next(new ErrorHandler("conversation not found", 404));
   }
-  return res.status(200).json({
-    success: true,
-    payload: conversation.messages || [],
-    message: "Messages fetched successfully",
-  });
-};
+  return res.success(conversation.messages, "Messages fetched successfully");
+});
 
 export const sendGroupMessage = async (req, res, next) => {
   const { groupId, channelName = "general" } = req.params;

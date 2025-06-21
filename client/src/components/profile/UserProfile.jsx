@@ -37,6 +37,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { removeMessage } from "@/redux/slicers/chatSlice";
+
 
 export default function StudyProfilePage() {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -121,6 +123,8 @@ export default function StudyProfilePage() {
         navigate("/");
         dispatch(setAuthUser(null));
         dispatch(setStatus(false));
+        dispatch(removeMessage([]))
+        
       }
     } catch (error) {
       toast.error(error.response.data.message || "something went wrong!");

@@ -9,7 +9,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: "http://localhost:5173/",
     methods: ["GET", "POST"],
   },
 });
@@ -32,9 +32,10 @@ io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
   if (userId) {
     userSocketMap.set(userId, socket.id);
-    console.log("userSocketMap", userSocketMap);
-    io.emit("getOnlineUsers", Array.from(userSocketMap.keys()));
+    console.log(`User connected: UserID: ${userId}, SocketID: ${socket.id}`);
+    
   }
+  io.emit("getOnlineUsers", Array.from(userSocketMap.keys()));
 
   socket.on("join-group", ({ groupId, userId }) => {
     const roomId = `${groupRoomPrefix}${groupId}`;
