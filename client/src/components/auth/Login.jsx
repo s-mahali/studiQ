@@ -37,7 +37,6 @@ const Login = () => {
       if (response?.data?.success) {
         dispatch(setAuthUser(response.data.user));
         dispatch(setStatus(true));
-        console.log("response", response.data.user);
         toast.success(response.data.message);
         navigate(`/profile/${response.data.user._id}`);
       }

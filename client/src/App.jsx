@@ -76,7 +76,6 @@ const App = () => {
         transports: ["websocket"],
       });
 
-      console.log("socketioClient", socketio);
       dispatch(setSocket(socketio));
       //listen all the events
       socketio.on("getOnlineUsers", (onlineUsers) => {

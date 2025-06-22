@@ -1,12 +1,15 @@
+import { imageKit } from "../config/imagekit.js";
+import { catchAsyncError } from "../middlewares/catchAsyncError.middleware.js";
 import ErrorHandler from "../middlewares/error.middleware.js";
 import Group from "../models/group.model.js";
 import Message from "../models/message.model.js";
 import User from "../models/user.model.js";
 
-export const createGroup = async (req, res, next) => {
+export const createGroup = catchAsyncError(async (req, res, next) => {
   const userId = req.user._id;
   const { title, description } = req.body;
-  const { coverImage } = req.file;
+  const coverImage = req.file;
+  console.log("userID", userId);
 
   if (!title || !description || !coverImage) {
     return next(new ErrorHandler("All fields are required", 400));
@@ -19,10 +22,11 @@ export const createGroup = async (req, res, next) => {
   }
 
   //file upload
+  let uploadResponse = null;
   if (coverImage) {
     try {
       const filestr = coverImage.buffer.toString("base64");
-      await imageKit.upload({
+      uploadResponse = await imageKit.upload({
         file: filestr,
         fileName: `${userId}-group-${Date.now()}`,
         folder: "/StudiQgroupCoverImage",
@@ -35,6 +39,10 @@ export const createGroup = async (req, res, next) => {
   const newGroup = await Group.create({
     title,
     description,
+    coverImage: {
+      url: uploadResponse.url,
+      fileId: uploadResponse.fileId,
+    },
     createdBy: userId,
     members: [
       {
@@ -43,6 +51,8 @@ export const createGroup = async (req, res, next) => {
       },
     ],
   });
+
+  // need to rollback and delete image from imagekit if something goes wrong
 
   //update user
   await User.findByIdAndUpdate(
@@ -59,20 +69,22 @@ export const createGroup = async (req, res, next) => {
     success: true,
     message: "Group created successfully",
   });
-};
+});
 
 export const editGroup = async (req, res, next) => {
   const userId = req.user._id;
-  const { title, description, groupId } = req.body;
-  const { coverImage } = req.file;
-
-  if (!title || !description || !coverImage) {
-    return next(new ErrorHandler("All fields are required", 400));
-  }
+  const { groupId } = req.params;
 
   const existingGroup = await Group.findById(groupId);
   if (!existingGroup) {
     return next(new ErrorHandler("Group Doesn't Exist", 404));
+  }
+
+  const { title, description } = req.body;
+  const coverImage = req.file;
+
+  if (!title && !description && !coverImage) {
+    return next(new ErrorHandler("Atleast one field need to be updated", 400));
   }
 
   const user = await User.findById(userId);
@@ -84,6 +96,9 @@ export const editGroup = async (req, res, next) => {
   if (existingGroup.createdBy.toString() !== userId.toString()) {
     return next(new ErrorHandler("Permission Denied!", 403));
   }
+  let updateData = {};
+  if (title) updateData.title = title;
+  if (description) updateData.description = description;
   let fileId = null;
   if (existingGroup.coverImage) {
     fileId = existingGroup.coverImage.fileId;
@@ -98,28 +113,25 @@ export const editGroup = async (req, res, next) => {
         folder: "/StudiQgroupCoverImage",
       });
 
-      await Group.findByIdAndUpdate(groupId, {
-        title: title ? title : existingGroup.title,
-        description: description ? description : existingGroup.description,
-        coverImage: coverImage
-          ? {
-              url: uploadResponse.url,
-              fileId: uploadResponse.fileId,
-            }
-          : {
-              url: existingGroup.coverImage.url,
-              fileId: existingGroup.coverImage.fileId,
-            },
-      });
+      updateData.coverImage = {
+        url: uploadResponse.url,
+        fileId: uploadResponse.fileId,
+      };
 
-      if (fileId) {
-        await imageKit.deleteFile(fileId);
+      if (existingGroup.coverImage) {
+        await imageKit.deleteFile(existingGroup.coverImage.fileId);
         console.log("old file deleted successfully", fileId);
       }
     } catch (error) {
       return next(new ErrorHandler(error.message, 400));
     }
+  } else {
+    if (existingGroup.coverImage) {
+      updateData.coverImage = existingGroup.coverImage;
+    }
   }
+
+  await Group.findByIdAndUpdate(groupId, updateData, { new: true });
 
   return res.status(200).json({
     success: true,
@@ -249,4 +261,4 @@ export const addMemberToGroup = async (req, res, next) => {
 };
 
 // kick member from group
-//leave group 
+//leave group

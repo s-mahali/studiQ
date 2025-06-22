@@ -10,7 +10,7 @@ import { useSelector } from "react-redux";
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isLogin = useSelector((state) => state.auth.status);
-  console.log("isLogin", isLogin)
+  
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };

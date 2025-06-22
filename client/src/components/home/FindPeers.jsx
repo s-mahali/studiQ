@@ -107,7 +107,6 @@ const FindPeers = ({ className }) => {
       try {
         const response = await fetchSuggestedPeers();
         if (response?.status === 200) {
-          console.log("peers", response?.data.peerlist);
           setPeersData(response?.data.peerlist);
           if (response?.data.pendingRequests.length > 0) {
             setSentRequestIds(response?.data.pendingRequests);
@@ -131,7 +130,6 @@ const FindPeers = ({ className }) => {
     try {
       const response = await sendConnectionToPeers({ receiverId });
       if (response?.status === 200) {
-        console.log("responseD:", response.data);
         setSentRequestIds((prev) => [...prev, receiverId]);
         toast.success(response.data.message || "Request Sent Successfully");
       }

@@ -14,7 +14,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
-
 const userSchema = new mongoose.Schema(
   {
     username: {
@@ -49,12 +48,12 @@ const userSchema = new mongoose.Schema(
     profilePicture: {
       url: {
         type: String,
-        default: null
+        default: null,
       },
-      fileId:{
-        type:String,
-        default: null
-      }
+      fileId: {
+        type: String,
+        default: null,
+      },
     },
     subjects: [
       {
@@ -106,7 +105,6 @@ const userSchema = new mongoose.Schema(
     groups: [
       {
         groupId: { type: mongoose.Schema.Types.ObjectId, ref: "Group" },
-       
       },
     ],
 
@@ -173,8 +171,8 @@ userSchema.methods.generateVerificationCode = function () {
   }
   this.verificationCode = generateRandomCode();
   this.verificationCodeExpires = Date.now() + 10 * 60 * 1000;
-  console.log(this.verificationCodeExpires);
-   // 10 minutes expiration
+
+  // 10 minutes expiration
   return this.verificationCode;
 };
 

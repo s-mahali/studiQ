@@ -10,7 +10,7 @@ export const sendMessage = catchAsyncError(async (req, res) => {
   const senderId = req.user._id;
   const receiverId = req.params.id;
   const { message } = req.body;
-  console.log("message", message);
+ 
 
   let conversation = await Conversation.findOne({
     participants: {
@@ -37,7 +37,7 @@ export const sendMessage = catchAsyncError(async (req, res) => {
   await Promise.all([newMessage.save(), conversation.save()]);
   await newMessage.populate([
     { path: "sender", select: "username profilePicture" },
-    { path: "receiver", select: "username profilePicture" }
+    
   ]);
   
   // socket.io for real time communication
@@ -67,12 +67,6 @@ export const getMessage =  catchAsyncError(async (req, res, next) => {
       path: "messages",
       populate: {
         path: "sender",
-        select: "username profilePicture",
-      }
-  }).populate({
-      path: "messages",
-      populate: {
-        path: "receiver",
         select: "username profilePicture",
       }
   })

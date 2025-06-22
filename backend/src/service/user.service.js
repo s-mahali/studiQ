@@ -54,7 +54,6 @@ export const uploadProfilePictureService = async (userId, profilePicture) => {
   let fileId = null;
   if (user.profilePicture) {
     fileId = user.profilePicture.fileId;
-    console.log("fileId", fileId);
   }
   //upload new profile picture to imagekit
   if (profilePicture) {

@@ -39,7 +39,6 @@ import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { removeMessage } from "@/redux/slicers/chatSlice";
 
-
 export default function StudyProfilePage() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [profileData, setProfileData] = useState(null);
@@ -57,7 +56,7 @@ export default function StudyProfilePage() {
   const pfpRef = useRef();
   const [pfpLoading, setPfpLoading] = useState(false);
   const { userId } = useParams();
-  console.log(userId, "userID");
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const authorId = useSelector((state) => state.auth.user?._id);
@@ -81,7 +80,6 @@ export default function StudyProfilePage() {
         }
         const response = await fetchUserProfile(userId);
         if (response?.status === 200) {
-          console.log(response?.data?.payload, "userProfiledata");
           setProfileData(response?.data.payload);
           toast.success(response.data.message);
           if (userId === authorId) {
@@ -123,8 +121,7 @@ export default function StudyProfilePage() {
         navigate("/");
         dispatch(setAuthUser(null));
         dispatch(setStatus(false));
-        dispatch(removeMessage([]))
-        
+        dispatch(removeMessage([]));
       }
     } catch (error) {
       toast.error(error.response.data.message || "something went wrong!");
@@ -136,7 +133,6 @@ export default function StudyProfilePage() {
       const response = await getIncomingFriendRequests();
       if (response.status === 200) {
         setIncomingRequest(response.data.requests);
-        console.log("requests", response.data.requests);
       }
     } catch (error) {
       console.error(error.message);
@@ -168,7 +164,6 @@ export default function StudyProfilePage() {
       const response = await fetchSendRequests();
       if (response.status === 200) {
         setSendRequest(response.data.payload);
-        console.log("Sentrequests", response.data.payload);
       }
     } catch (error) {
       console.error(error.message);
@@ -180,7 +175,7 @@ export default function StudyProfilePage() {
   //cancel sent-request
   const handleCancelRequest = async (receiverId) => {
     setCancelLoading(true);
-    console.log("sendRequest1", sendRequest);
+
     try {
       const response = await cancelSentRequest({
         sentUserId: receiverId,
@@ -189,7 +184,6 @@ export default function StudyProfilePage() {
         await sentRequestHandler();
         setRelationshipStatus("none");
         toast.success(response.data.message);
-        console.log("sendRequest", sendRequest);
       }
     } catch (error) {
       console.error(error.message);
@@ -208,7 +202,7 @@ export default function StudyProfilePage() {
       });
       if (response.status === 200) {
         toast.success(response.data.message);
-        console.log(response.data);
+
         await incomingRequestHandler();
         await sentRequestHandler();
       }
@@ -249,7 +243,6 @@ export default function StudyProfilePage() {
             friend.user._id.toString() == authorId.toString() ||
             (friend.user._id && friend.user._id == authorId)
         );
-      console.log("isFriend", isFriend);
 
       if (isFriend) {
         setRelationshipStatus("friend");
@@ -667,10 +660,10 @@ export default function StudyProfilePage() {
                               You and {profileData?.username} are friends
                             </div>
                             <Link to={`/dm/${userId}`}>
-                             <button className="w-full bg-transparent border border-teal-500 hover:bg-teal-800/20 py-2 rounded-md text-teal-400 font-medium transition-colors">
-                              <Send size={16} className="inline mr-2" />
-                              Send Message
-                            </button>
+                              <button className="w-full bg-transparent border border-teal-500 hover:bg-teal-800/20 py-2 rounded-md text-teal-400 font-medium transition-colors">
+                                <Send size={16} className="inline mr-2" />
+                                Send Message
+                              </button>
                             </Link>
                           </div>
                         ) : relationshipStatus === "incoming" ? (
@@ -786,7 +779,12 @@ export default function StudyProfilePage() {
                               +
                             </div>
                           )}
-                          <Link to={`/profile/${friend.user._id.toString()}`} className="text-sm">{friend.user.username}</Link>
+                          <Link
+                            to={`/profile/${friend.user._id.toString()}`}
+                            className="text-sm"
+                          >
+                            {friend.user.username}
+                          </Link>
                         </div>
                       ))}
                     </div>

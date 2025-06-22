@@ -18,10 +18,12 @@ import { fetchDm, fetchUserProfile, sendDm } from "@/services/api.services";
 import { useDispatch, useSelector } from "react-redux";
 import useGetRTM from "@/hooks/useGetRTM";
 import { setMessages } from "@/redux/slicers/chatSlice";
-import { format, isToday, isYesterday, set } from "date-fns";
-import { current } from "@reduxjs/toolkit";
+import { format, isToday, isYesterday } from "date-fns";
+import useGetAllMessages from "@/hooks/useGetAllMessages";
 
 const Dm = () => {
+  const { receiverId } = useParams();
+  useGetAllMessages(receiverId);
   useGetRTM();
   const chatRef = useRef(null);
   const [content, setContent] = useState("");
@@ -29,11 +31,9 @@ const Dm = () => {
   const [isOnline, setIsOnline] = useState(false);
   const [receiver, setReceiver] = useState(null);
   const messages = useSelector((state) => state.chat.messages);
-  console.log("messages --------->", messages);
   const currentUser = useSelector((state) => state.auth.user);
   const onlineUsers = useSelector((state) => state.chat.onlineUsers);
   const dispatch = useDispatch();
-  const { receiverId } = useParams();
 
   // Scroll to bottom when message changes
 
@@ -99,38 +99,13 @@ const Dm = () => {
 
       const response = await sendDm({ message: content }, receiverId);
       if (response?.status === 200) {
-        const newMessage = response?.data.payload;
-        dispatch(
-          setMessages([
-            ...(Array.isArray(messages) ? messages : []),
-            newMessage,
-          ])
-        );
+        dispatch(setMessages([...messages, response.data.payload]));
         setContent("");
       }
     } catch (error) {
       console.error("Error while sending message", error.message);
     }
   };
-
-  // Fetch messages
-  useEffect(() => {
-    const fetchAllMessage = async () => {
-      try {
-        setIsLoading(true);
-        const res = await fetchDm(receiverId);
-        if (res?.status === 200) {
-          console.log("message fetch successfully");
-          dispatch(setMessages(res.data.payload));
-        }
-      } catch (error) {
-        console.error("Error while fetching dm", error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchAllMessage();
-  }, [receiverId, dispatch, setMessages]);
 
   // Fetch receiver details
   useEffect(() => {
@@ -213,8 +188,7 @@ const Dm = () => {
         {/* Messages Area */}
         <ScrollArea className="flex-1 bg-gray-900" ref={chatRef}>
           <div className="space-y-1 p-4">
-            {Array.isArray(messages) &&
-              messages.length > 0 &&
+            {messages &&
               messages.map((message, index) => {
                 const showDateHeader = shouldShowDateHeader(
                   message,
@@ -319,7 +293,7 @@ const Dm = () => {
               type="submit"
               size="sm"
               disabled={!content.trim()}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-teal-600 hover:bg-teal-700 cursor-pointer"
             >
               <SendHorizontal className="h-4 w-4" />
             </Button>

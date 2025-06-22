@@ -53,7 +53,7 @@ export const updateUserProfile = catchAsyncError(async (req, res, next) => {
     }
 
     const userId = req.user._id;
-    console.log("userId", userId);
+   
     //call service here
     const updatedUser = await updateUserService(userId, validatedData);
     res.status(200).json({
@@ -104,7 +104,7 @@ export const getUserProfileById = catchAsyncError(async (req, res, next) => {
     });
   }
 
-  console.log("user", user);
+
 
   return res.status(200).json({
     success: true,

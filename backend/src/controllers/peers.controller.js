@@ -189,7 +189,7 @@ export const getSendFriendRequest = catchAsyncError(async (req, res, next) => {
     .limit(5)
     .sort({ createdAt: 1 })
     .populate("sentFriendRequests.to", "username profilePicture");
-  
+
   const formattedRequests = requests.sentFriendRequests.map((request) => ({
     requestId: request._id.toString(),
     reciever: {
@@ -205,7 +205,6 @@ export const getSendFriendRequest = catchAsyncError(async (req, res, next) => {
       payload: formattedRequests || [],
       message: "Friend requests fetched successfully",
     });
-   
   } else {
     return res.status(400).json({
       success: false,
@@ -219,28 +218,25 @@ export const cancelSentFriendRequest = catchAsyncError(
     const userId = req.user._id;
     const { sentUserId } = req.body;
 
+    //validate both users exist
+    const [user, sentUser] = await Promise.all([
+      User.findById(userId),
+      User.findById(sentUserId),
+    ]);
 
+    if (!user || !sentUser) {
+      return next(new ErrorHandler("User not found", 404));
+    }
 
-     //validate both users exist
-  const [user, sentUser] = await Promise.all([
-    User.findById(userId),
-    User.findById(sentUserId),
-  ]);
+    const isRequestSent = user.sentFriendRequests.some(
+      (request) =>
+        request.to.toString() === sentUserId && request.status === "pending"
+    );
 
-  if (!user || !sentUser) {
-    return next(new ErrorHandler("User not found", 404));
-  }
-  
- const isRequestSent = user.sentFriendRequests.some(
-    (request) =>
-      request.to.toString() === sentUserId &&
-      request.status === "pending"
-  );
+    if (!isRequestSent) {
+      return next(new ErrorHandler("Friend request not found", 404));
+    }
 
-  if (!isRequestSent) {
-    return next(new ErrorHandler("Friend request not found", 404));
-  }
-    
     const updateUser = await User.findByIdAndUpdate(
       userId,
       {
@@ -253,8 +249,6 @@ export const cancelSentFriendRequest = catchAsyncError(
       { new: true }
     );
 
-    
-
     const updateUser2 = await User.findByIdAndUpdate(
       sentUserId,
       {
@@ -266,8 +260,6 @@ export const cancelSentFriendRequest = catchAsyncError(
       },
       { new: true }
     );
-
-    
 
     return res.status(200).json({
       success: true,
@@ -293,8 +285,7 @@ export const acceptFriendRequest = catchAsyncError(async (req, res, next) => {
 
   //find the specific friendRequst
   const reqIndex = accepter.friendRequests.findIndex(
-    (req) =>
-      req.from.toString() === reqSenderId && req.status === "pending"
+    (req) => req.from.toString() === reqSenderId && req.status === "pending"
   );
 
   if (reqIndex === -1) {
@@ -397,17 +388,14 @@ export const rejectFriendRequest = catchAsyncError(async (req, res, next) => {
     User.findById(reqSenderId),
   ]);
 
-
   if (!rejecter || !sender) {
     return next(new ErrorHandler("User not found", 404));
   }
 
   //find the specific friendRequst
   const reqIndex = rejecter.friendRequests.findIndex(
-    (req) =>
-      req.from.toString() === reqSenderId && req.status === "pending"
+    (req) => req.from.toString() === reqSenderId && req.status === "pending"
   );
-  console.log("reqIndex", reqIndex);
 
   if (reqIndex === -1) {
     return next(new ErrorHandler("Friend Request not found", 404));
