@@ -13,6 +13,7 @@ export const errorMiddleware = (err,req,res,next) => {
 
     if(err.name === "CastError"){
         const message = `Invalid ${err.path}`;
+        console.log("ERROR:🪲 ",err);
         err = new ErrorHandler(message, 400);
     }
 

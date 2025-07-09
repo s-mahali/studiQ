@@ -19,7 +19,7 @@ groupRouter.use(isAuthenticated);
 groupRouter.post("/", upload.single("coverImage"), createGroup);
 groupRouter.put("/:groupId", upload.single("coverImage"), editGroup);
 groupRouter.delete("/", deleteGroup);
-groupRouter.get("/:groupId", getGroupById);
 groupRouter.get("/all", getGroups);
 groupRouter.get("/userjoined", getUserJoinedGroups);
 groupRouter.post("/addmember", addMemberToGroup);
+groupRouter.get("/:groupId/get", getGroupById);

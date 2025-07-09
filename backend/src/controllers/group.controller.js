@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { imageKit } from "../config/imagekit.js";
 import { catchAsyncError } from "../middlewares/catchAsyncError.middleware.js";
 import ErrorHandler from "../middlewares/error.middleware.js";
@@ -71,7 +72,7 @@ export const createGroup = catchAsyncError(async (req, res, next) => {
   });
 });
 
-export const editGroup = async (req, res, next) => {
+export const editGroup =  catchAsyncError(async (req, res, next) => {
   const userId = req.user._id;
   const { groupId } = req.params;
 
@@ -119,25 +120,23 @@ export const editGroup = async (req, res, next) => {
       };
 
       if (existingGroup.coverImage) {
-        await imageKit.deleteFile(existingGroup.coverImage.fileId);
+        imageKit.deleteFile(existingGroup.coverImage.fileId);
         console.log("old file deleted successfully", fileId);
       }
     } catch (error) {
-      return next(new ErrorHandler(error.message, 400));
-    }
-  } else {
-    if (existingGroup.coverImage) {
-      updateData.coverImage = existingGroup.coverImage;
+       console.log("Error deleting old file",error.message);
     }
   }
 
   await Group.findByIdAndUpdate(groupId, updateData, { new: true });
 
+  console.log("Updated Group", updateData);
+
   return res.status(200).json({
     success: true,
     message: "Group Updated Successfully",
   });
-};
+});
 
 export const deleteGroup = async (req, res, next) => {
   const userId = req.user._id;
@@ -193,10 +192,12 @@ export const getGroupById = async (req, res, next) => {
 };
 
 export const getGroups = async (req, res, next) => {
+  console.log("getGroups called");
   const groups = await Group.find().populate({
     path: "members",
     select: "username profilePicture",
   });
+  console.log("getGroups finished");
   return res.status(200).json({
     success: true,
     message: "Groups fetched successfully",
@@ -212,10 +213,15 @@ export const getUserJoinedGroups = async (req, res, next) => {
   }
   // not clear which group It will return
   const groups = await Group.find({
-    members: groups.members.filter(
-      (member) => member.userId.toString() !== userId.toString()
-    ),
-  });
+    members: {
+      $elemMatch: {
+        userId: userId,
+        role: {
+          $in: ["owner", "member"],
+        },
+      },
+    },
+  }).select("title description coverImage members createdBy channels");
   return res.status(200).json({
     success: true,
     message: "Groups fetched successfully",
@@ -229,14 +235,16 @@ export const addMemberToGroup = async (req, res, next) => {
     return next(new ErrorHandler("User required", 401));
   }
   const joinKarneWalaCandidate = await User.findById(joinKarnewalaKaID);
+  console.log("joinKarneWala", joinKarneWalaCandidate)
   const group = await Group.findById(groupId);
-  const groupOwnerId = group.createdBy.toString();
+  console.log("group", group);
+  const groupOwnerId =  group.createdBy.toString();
   if (!group) {
     return next(new ErrorHandler("Group not Found", 404));
   }
 
   const isFriend = joinKarneWalaCandidate.friends.some(
-    (user) => user.toString() === groupOwnerId
+    (friend) => friend.user.toString() === groupOwnerId
   );
 
   if (!isFriend) {

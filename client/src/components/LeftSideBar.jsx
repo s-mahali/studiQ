@@ -12,9 +12,11 @@ import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useSelector } from "react-redux";
+import CreateGroup from "./group/CreateGroup";
 
 const LeftSideBar = () => {
   const [hoverItem, setHoveredItem] = useState(null);
+  const [open, setOpen] = useState(false);
   const location = useLocation();
   const user = useSelector((state) => state.auth.user);
 
@@ -49,7 +51,8 @@ const LeftSideBar = () => {
     {
       icon: <PlusSquare />,
       text: "Create",
-      path: "/create",
+      
+      
     },
 
     {
@@ -66,41 +69,59 @@ const LeftSideBar = () => {
             const isActive = location.pathname === item.path;
             return (
               <TooltipProvider key={index} delayDuration={300}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link
-                      to={item.path}
-                      className="relative w-full flex justify-center"
-                      onMouseEnter={() => setHoveredItem(index)}
-                      onMouseLeave={() => setHoveredItem(null)}
-                    >
-                      <div
-                        className={cn(
-                          "p-3 rounded-md transition-all duration-200 group",
-                          isActive
-                            ? "bg-teal-600 text-white"
-                            : "text-gray-400 hover:text-white hover:bg-gray-800"
-                        )}
-                      >
-                        {item.icon}
+              <Tooltip>
+              <TooltipTrigger asChild>
+              {item.text === "Create" ? (
+                <div
+                className="relative w-full flex justify-center cursor-pointer"
+                onMouseEnter={() => setHoveredItem(index)}
+                onMouseLeave={() => setHoveredItem(null)}
+                onClick={() => setOpen(true)}
+                >
+                <div
+                className={cn(
+                "p-3 rounded-md transition-all duration-200 group",
+                "text-gray-400 hover:text-white hover:bg-gray-800"
+                )}
+                >
+                {item.icon}
+                </div>
+                </div>
+              ) : (
+                <Link
+                to={item.path}
+                className="relative w-full flex justify-center"
+                onMouseEnter={() => setHoveredItem(index)}
+                onMouseLeave={() => setHoveredItem(null)}
+                >
+                <div
+                className={cn(
+                "p-3 rounded-md transition-all duration-200 group",
+                isActive
+                  ? "bg-teal-600 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-gray-800"
+                )}
+                >
+                {item.icon}
 
-                        {/* Pill indicator for active item */}
-                        {isActive && (
-                          <motion.div
-                            className="absolute left-0 w-1 h-8 bg-white rounded-full"
-                            layoutId="sidebar-indicator"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.2 }}
-                          />
-                        )}
-                      </div>
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">
-                    <p>{item.text}</p>
-                  </TooltipContent>
-                </Tooltip>
+                {/* Pill indicator for active item */}
+                {isActive && (
+                <motion.div
+                  className="absolute left-0 w-1 h-8 bg-white rounded-full"
+                  layoutId="sidebar-indicator"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2 }}
+                />
+                )}
+                </div>
+                </Link>
+              )}
+              </TooltipTrigger>
+              <TooltipContent side="right">
+              <p>{item.text}</p>
+              </TooltipContent>
+              </Tooltip>
               </TooltipProvider>
             );
           })}
@@ -142,6 +163,7 @@ const LeftSideBar = () => {
 
       {/* Add padding to content on mobile to account for bottom bar */}
       <div className="md:hidden pb-16" />
+      <CreateGroup open={open} setOpen={setOpen}/>
     </>
   );
 };

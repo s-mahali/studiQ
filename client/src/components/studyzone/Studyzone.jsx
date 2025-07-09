@@ -10,6 +10,7 @@ import {
 import {
   BookOpen,
   Coffee,
+  EditIcon,
   FileUp,
   Headphones,
   MessageSquare,
@@ -21,6 +22,7 @@ import {
   SendHorizontal,
   Settings,
   Share,
+  UserPlus,
   Users,
   Video,
 } from "lucide-react";
@@ -30,24 +32,34 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { ScrollArea } from "../ui/scroll-area";
 import { Input } from "../ui/input";
+import { fetchGroupById, fetchGroups } from "@/services/api.services";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import EditGroupDialogue from "../group/EditGroupDialogue";
+import AddMemberDialog from "../group/AddMemberDialog";
 
 const Studyzone = () => {
-  const [activeGroup, setActiveGroup] = useState(null);
+  const [activeGroup, setActiveGroup] = useState(0);
+  const [currentGroup, setCurrentGroup] = useState(null);
+  const [currentGroupId, setCurrentGroupId] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMuted, setIsmuted] = useState(false);
   const [message, setMessage] = useState("");
   const [isInCall, setIsInCall] = useState(false);
+  //fetchgroup state
+  const [groupData, setGroupData] = useState([]);
+  const [showEditGroup, setShowEditGroup] = useState(false);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const chatRef = useRef(null);
   const user = useSelector((state) => state.auth.user);
-  
 
-  //sample static data
-  const groups = [
-    { id: 1, name: "Math Study", image: null },
-    { id: 2, name: "CS Group", image: null },
-    { id: 3, name: "Physics Lab", image: null },
-    { id: 4, name: "Chemistry", image: null },
-  ];
+  console.log("activeGroup", activeGroup);
 
   const members = [
     {
@@ -135,43 +147,83 @@ const Studyzone = () => {
   const toggleMute = () => setIsmuted(!isMuted);
   const toggleCall = () => setIsInCall(!isInCall);
 
+  useEffect(() => {
+    const fetchUserGroups = async () => {
+      try {
+        const response = await fetchGroups();
+        if (response?.status === 200) {
+          setGroupData(response?.data?.payload);
+          console.log("groups", response?.data?.payload);
+
+          if (response.data.payload.length > 0) {
+            setActiveGroup(0);
+            setCurrentGroupId(response?.data?.payload[0]?._id);
+          }
+        }
+      } catch (error) {
+        console.error(error.message);
+      }
+    };
+    fetchUserGroups();
+  }, [currentGroupId]);
+
+  useEffect(() => {
+    const fetchUserGroupById = async () => {
+      try {
+        const response = await fetchGroupById(currentGroupId);
+        if (response?.status === 200) {
+          console.log("group", response?.data?.payload);
+        }
+      } catch (error) {
+        console.error(error.message);
+      }
+    };
+    fetchUserGroupById();
+  }, [currentGroupId]);
+
   return (
     <div className=" min-h-screen bg-slate-900 flex overflow-hidden">
       {/* Group selection sidebar */}
       <motion.div
-        className="bg-gray-900 border-r border-gray-700  w-18 flex flex-col flex-shrink-0  items-center py-4"
+        className="bg-gray-900 border-r border-gray-700 w-18 flex flex-col flex-shrink-0 items-center py-4"
         initial={{ width: 72 }}
         animate={{ width: 72 }}
         transition={{ duration: 0.2 }}
       >
-        {groups.map((group, i) => (
-          <TooltipProvider key={group.id}>
+        {groupData.map((group, i) => (
+          <TooltipProvider key={group._id}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <motion.button
-                  className={`w-12 h-12 rounded-full mb-4 flex items-center justify-center transition-all ${
+                  className={`w-12 h-12 rounded-full mb-4 flex items-center justify-center transition-all overflow-hidden ${
                     activeGroup === i
-                      ? "bg-teal-600"
+                      ? "ring-2 ring-offset-2 ring-offset-gray-900 ring-teal-600"
                       : "bg-slate-800 hover:bg-slate-700"
                   }`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setActiveGroup(i)}
                 >
-                  {group.image ? (
+                  {group.coverImage ? (
                     <img
-                      src={group.image}
-                      alt={group.name}
-                      className="w-full h-full rounded-full object-cover"
+                      src={group.coverImage.url}
+                      alt={group.title}
+                      className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-lg font-bold text-white">
-                      {group.name.substring(0, 2)}
-                    </span>
+                    <div
+                      className={`w-full h-full flex items-center justify-center ${
+                        activeGroup === i ? "bg-teal-600" : "bg-slate-800"
+                      }`}
+                    >
+                      <span className="text-lg font-bold text-white">
+                        {group.title.substring(0, 2)}
+                      </span>
+                    </div>
                   )}
                 </motion.button>
               </TooltipTrigger>
-              <TooltipContent side="right">{group.name}</TooltipContent>
+              <TooltipContent side="right">{group.title}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         ))}
@@ -190,10 +242,10 @@ const Studyzone = () => {
             <div className="p-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <BookOpen size={18} />
-                {/* {groups[activeGroup.name]} */} collab
+                {groupData[activeGroup]?.title}
               </h2>
               <p className="text-slate-400 text-sm">
-                Study together, learn better
+                {groupData[activeGroup]?.description}
               </p>
             </div>
             <Separator className="bg-slate-700 my-2" />
@@ -244,7 +296,7 @@ const Studyzone = () => {
 
             <Separator className="bg-slate-700 my-2" />
 
-            {isInCall && (
+            {/* {isInCall && (
               <div className="p-4">
                 <h3 className="text-sm font-medium text-slate-400 mb-3">
                   Currently in Voice Call
@@ -281,7 +333,7 @@ const Studyzone = () => {
                     ))}
                 </div>
               </div>
-            )}
+            )} */}
           </motion.div>
         )}
       </AnimatePresence>
@@ -314,20 +366,37 @@ const Studyzone = () => {
               5 online
             </Badge>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={"text-slate-400 hover:text-white"}
-                  >
-                    <Settings size={18} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Settings</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={"text-slate-400 hover:text-white"}
+                >
+                  <Settings size={18} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-56 bg-slate-800 border-slate-700 text-slate-300"
+              >
+                <DropdownMenuItem
+                  onClick={() => setShowEditGroup(true)}
+                  className="cursor-pointer hover: bg-slate-700 hover:text-white"
+                >
+                  <EditIcon className="mr-2 h-4 w-4" />
+                  <span>Edit Group</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-slate-700" />
+                <DropdownMenuItem
+                  onClick={() => setShowAddMember(true)}
+                  className="cursor-pointer hover:bg-slate-700 hover:text-white"
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  <span>Add Member</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         {/* Chat Messages */}
@@ -504,6 +573,18 @@ const Studyzone = () => {
           </div>
         </ScrollArea>
       </motion.div>
+      <EditGroupDialogue 
+        open={showEditGroup}
+        setOpen={setShowEditGroup}
+        groupId={groupData[activeGroup]?._id}
+        groupData={groupData[activeGroup]}
+       />
+
+       <AddMemberDialog 
+         open={showAddMember}
+         setOpen={setShowAddMember}
+         groupId={groupData[activeGroup]?._id }
+       />
     </div>
   );
 };

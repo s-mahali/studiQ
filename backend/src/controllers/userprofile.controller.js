@@ -53,7 +53,7 @@ export const updateUserProfile = catchAsyncError(async (req, res, next) => {
     }
 
     const userId = req.user._id;
-   
+
     //call service here
     const updatedUser = await updateUserService(userId, validatedData);
     res.status(200).json({
@@ -96,6 +96,7 @@ export const getUserProfileById = catchAsyncError(async (req, res, next) => {
     .populate("friends.user", "username profilePicture")
     .populate("friendRequests.from", "username profilePicture")
     .populate("sentFriendRequests.to", "username profilePicture")
+
     .exec();
   if (!user) {
     return res.status(404).json({
@@ -103,8 +104,6 @@ export const getUserProfileById = catchAsyncError(async (req, res, next) => {
       message: "User not found!",
     });
   }
-
-
 
   return res.status(200).json({
     success: true,

@@ -1,6 +1,3 @@
-//user will send request to peers
-//peers will accept or reject the request
-//
 import User from "../models/user.model.js";
 import ErrorHandler from "../middlewares/error.middleware.js";
 import { catchAsyncError } from "../middlewares/catchAsyncError.middleware.js";
@@ -440,5 +437,18 @@ export const rejectFriendRequest = catchAsyncError(async (req, res, next) => {
     });
   } catch (error) {
     return next(new ErrorHandler("Failed to reject friend request", 500));
+  }
+});
+
+export const getConnections = catchAsyncError(async (req, res, next) => {
+  const userId = req.user._id;
+  const user = await User.findById(userId)
+    .select("friends")
+    .populate("friends.user", "username profilePicture");
+    console.log("userConnection", user);
+  if (!user) {
+    return next(new ErrorHandler("User not Authenticated", 401));
+  } else {
+    return res.success(user, "Connection fetched successfully");
   }
 });
