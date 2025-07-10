@@ -19,7 +19,10 @@ const LeftSideBar = () => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const user = useSelector((state) => state.auth.user);
-
+  const {userGroups} = useSelector((store) => store.group)
+  console.log("groups", userGroups);
+  const groupId = userGroups[0]?._id
+  
   let userId = user?._id;
   if (!userId) {
     return null;
@@ -40,7 +43,7 @@ const LeftSideBar = () => {
     {
       icon: <BookOpen size={22} />,
       text: "StudyZone",
-      path: "/study-zone",
+      path: `/study-zone/${groupId}`,
     },
     {
       icon: <UserLock />,

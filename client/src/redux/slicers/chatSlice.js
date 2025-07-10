@@ -4,6 +4,7 @@ const initialState = {
     targetUser: null,
     onlineUsers: [],
     messages: [],
+    
 }
 
 const chatSlice = createSlice({
@@ -22,7 +23,9 @@ const chatSlice = createSlice({
        
         removeMessage(state){
             state.messages = [];
-        }
+        },
+        
+
        
     }
 });

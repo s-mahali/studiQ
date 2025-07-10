@@ -12,6 +12,7 @@ import {
   getUserJoinedGroups,
 } from "../controllers/group.controller.js";
 import { upload } from "../utils/multer.js";
+import { getGroupMessage, sendGroupMessage } from "../controllers/message.controller.js";
 
 export const groupRouter = Router();
 groupRouter.use(isAuthenticated);
@@ -23,3 +24,5 @@ groupRouter.get("/all", getGroups);
 groupRouter.get("/userjoined", getUserJoinedGroups);
 groupRouter.post("/addmember", addMemberToGroup);
 groupRouter.get("/:groupId/get", getGroupById);
+groupRouter.post("/chat/:groupId/:channelName", sendGroupMessage);
+groupRouter.get("/chat/:groupId/:channelName", getGroupMessage);

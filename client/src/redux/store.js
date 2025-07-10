@@ -3,10 +3,10 @@ import themeSlice from "./slicers/ThemeSlice";
 import authSlice from "./slicers/authSlice";
 import socketSlice from "./slicers/socketSlice";
 import chatSlice from "./slicers/chatSlice";
+import groupSlice from "./slicers/groupSlice";
 
 
 import {
-
   persistReducer,
   FLUSH,
   REHYDRATE,
@@ -29,7 +29,8 @@ const rootReducer = combineReducers({
   theme: themeSlice,
   auth: authSlice,
   socketio: socketSlice,
-  chat: chatSlice
+  chat: chatSlice,
+  group: groupSlice,
  
 })
 

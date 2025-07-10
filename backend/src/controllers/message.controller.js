@@ -77,8 +77,8 @@ export const getMessage =  catchAsyncError(async (req, res, next) => {
   return res.success(conversation.messages, "Messages fetched successfully");
 });
 
-export const sendGroupMessage = async (req, res, next) => {
-  const { groupId, channelName = "general" } = req.params;
+export const sendGroupMessage = catchAsyncError(async (req, res, next) => {
+  const { groupId, channelName = "general"} = req.params;
   const { content } = req.body;
   const senderId = req.user._id;
 
@@ -114,23 +114,23 @@ export const sendGroupMessage = async (req, res, next) => {
   }
 
   await group.save();
-  //Emit via socket if users currently not connected
-  const io = req.app.get("io");
+  //Emit via socket 
   const roomId = `group-${groupId}`;
   await newMessage.populate("sender", "username profilePicture");
-  io.to(roomId).emit("new-group-message", {
+  io.to(roomId).emit("newGroupMessage", {
     message: newMessage,
     groupId,
     channelName,
   });
 
-  return res.status(201).json({
+  return res.status(200).json({
     success: true,
     message: "Message sent successfully",
+    payload: newMessage,
   });
-};
+});
 
-export const getGroupMessage = async (req, res, next) => {
+export const getGroupMessage = catchAsyncError(async (req, res, next) => {
   const { groupId, channelName = "general" } = req.params;
   const { page = 1, limit = 50 } = req.query;
   const skip = (page - 1) * limit;
@@ -180,4 +180,4 @@ export const getGroupMessage = async (req, res, next) => {
     messages: messages.reverse(),
     totalCounts,
   });
-};
+});
