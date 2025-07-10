@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import React, { useEffect,  useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Tooltip,
@@ -11,7 +11,6 @@ import {
   BookOpen,
   Coffee,
   EditIcon,
-  FileUp,
   Headphones,
   MessageSquare,
   Mic,
@@ -19,7 +18,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
-  SendHorizontal,
   Settings,
   Share,
   UserPlus,
@@ -28,11 +26,8 @@ import {
 } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
-import { ScrollArea } from "../ui/scroll-area";
-import { Input } from "../ui/input";
-import { fetchGroupById, fetchGroups } from "@/services/api.services";
+import { fetchGroupById, fetchGroupChat} from "@/services/api.services";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,11 +37,14 @@ import {
 } from "../ui/dropdown-menu";
 import EditGroupDialogue from "../group/EditGroupDialogue";
 import AddMemberDialog from "../group/AddMemberDialog";
+import Groupchat from "../group/groupchat/Groupchat";
+import GroupMembers from "../group/groupchat/GroupMembers";
+import { useNavigate, useParams } from "react-router-dom";
+import { setGroupMessage, setCurrentGroupId } from "@/redux/slicers/groupSlice";
 
 const Studyzone = () => {
-  const [activeGroup, setActiveGroup] = useState(0);
+  //const [activeGroup, setActiveGroup] = useState(0);
   const [currentGroup, setCurrentGroup] = useState(null);
-  const [currentGroupId, setCurrentGroupId] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMuted, setIsmuted] = useState(false);
   const [message, setMessage] = useState("");
@@ -56,121 +54,37 @@ const Studyzone = () => {
   const [showEditGroup, setShowEditGroup] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
-  const chatRef = useRef(null);
+  const dispatch = useDispatch();
+  
   const user = useSelector((state) => state.auth.user);
+  const {groupId} = useParams();
+  const {userGroups} = useSelector((store) => store.group);
+  const navigate = useNavigate();
+  
 
-  console.log("activeGroup", activeGroup);
+  //find the active group
+  const activeGroup = userGroups.find(group => group._id === groupId);
+  
+  const handleGroupClick = (id) => {
+    navigate(`/study-zone/${id}`);
+  }
 
-  const members = [
-    {
-      id: 1,
-      name: "Alex Smith",
-      status: "online",
-      isSpeaking: true,
-      image: null,
-    },
-    {
-      id: 2,
-      name: "Jamie Rodriguez",
-      status: "online",
-      isSpeaking: false,
-      image: null,
-    },
-    {
-      id: 3,
-      name: "Taylor Kim",
-      status: "idle",
-      isSpeaking: false,
-      image: null,
-    },
-    {
-      id: 4,
-      name: "Jordan Lee",
-      status: "offline",
-      isSpeaking: false,
-      image: null,
-    },
-    {
-      id: 5,
-      name: "Casey Johnson",
-      status: "online",
-      isSpeaking: false,
-      image: null,
-    },
-  ];
-
-  const messages = [
-    {
-      id: 1,
-      user: "Alex Smith",
-      content: "Hey everyone! Who's joining the study session today?",
-      time: "10:30 AM",
-      image: null,
-    },
-    {
-      id: 2,
-      user: "Jamie Rodriguez",
-      content: "I'll be there in 5 minutes, just finishing up some notes.",
-      time: "10:32 AM",
-      image: null,
-    },
-    {
-      id: 3,
-      user: "Taylor Kim",
-      content:
-        "Could someone help me with problem set #4? I'm stuck on the third question.",
-      time: "10:35 AM",
-      image: null,
-    },
-    {
-      id: 4,
-      user: "Alex Smith",
-      content: "Sure, we can review it together when we start the session.",
-      time: "10:38 AM",
-      image: null,
-    },
-    {
-      id: 5,
-      user: "Casey Johnson",
-      content:
-        "I found this really helpful article about today's topic: https://example.com/study-resource",
-      time: "10:40 AM",
-      image: null,
-    },
-  ];
-
-  useEffect(() => {
-    if (chatRef.current) {
-      chatRef.current.scrollTop = chatRef.current.scrollHeight;
-    }
-  }, [messages]);
   const toggleMute = () => setIsmuted(!isMuted);
   const toggleCall = () => setIsInCall(!isInCall);
-
+ 
+  //fetch message-history and set groupId
   useEffect(() => {
-    const fetchUserGroups = async () => {
-      try {
-        const response = await fetchGroups();
-        if (response?.status === 200) {
-          setGroupData(response?.data?.payload);
-          console.log("groups", response?.data?.payload);
-
-          if (response.data.payload.length > 0) {
-            setActiveGroup(0);
-            setCurrentGroupId(response?.data?.payload[0]?._id);
-          }
-        }
-      } catch (error) {
-        console.error(error.message);
-      }
-    };
-    fetchUserGroups();
-  }, [currentGroupId]);
+    if(groupId){
+       dispatch(setCurrentGroupId(groupId));
+    }
+     
+  },[groupId, dispatch]);
+  
 
   useEffect(() => {
     const fetchUserGroupById = async () => {
       try {
-        const response = await fetchGroupById(currentGroupId);
+        const response = await fetchGroupById(groupId);
         if (response?.status === 200) {
           console.log("group", response?.data?.payload);
         }
@@ -179,7 +93,7 @@ const Studyzone = () => {
       }
     };
     fetchUserGroupById();
-  }, [currentGroupId]);
+  }, []);
 
   return (
     <div className=" min-h-screen bg-slate-900 flex overflow-hidden">
@@ -190,19 +104,19 @@ const Studyzone = () => {
         animate={{ width: 72 }}
         transition={{ duration: 0.2 }}
       >
-        {groupData.map((group, i) => (
+        {userGroups && userGroups.map((group, i) => (
           <TooltipProvider key={group._id}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <motion.button
                   className={`w-12 h-12 rounded-full mb-4 flex items-center justify-center transition-all overflow-hidden ${
-                    activeGroup === i
+                    activeGroup
                       ? "ring-2 ring-offset-2 ring-offset-gray-900 ring-teal-600"
                       : "bg-slate-800 hover:bg-slate-700"
                   }`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveGroup(i)}
+                  onClick={() => handleGroupClick(group._id)}
                 >
                   {group.coverImage ? (
                     <img
@@ -213,7 +127,7 @@ const Studyzone = () => {
                   ) : (
                     <div
                       className={`w-full h-full flex items-center justify-center ${
-                        activeGroup === i ? "bg-teal-600" : "bg-slate-800"
+                        activeGroup ? "bg-teal-600" : "bg-slate-800"
                       }`}
                     >
                       <span className="text-lg font-bold text-white">
@@ -228,7 +142,6 @@ const Studyzone = () => {
           </TooltipProvider>
         ))}
       </motion.div>
-
       {/* action sidebar */}
       <AnimatePresence initial={false}>
         {!sidebarCollapsed && (
@@ -242,10 +155,10 @@ const Studyzone = () => {
             <div className="p-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <BookOpen size={18} />
-                {groupData[activeGroup]?.title}
+                {activeGroup?.title}
               </h2>
               <p className="text-slate-400 text-sm">
-                {groupData[activeGroup]?.description}
+                {activeGroup?.description}
               </p>
             </div>
             <Separator className="bg-slate-700 my-2" />
@@ -337,7 +250,6 @@ const Studyzone = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
       {/* Main content Area  */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
@@ -399,70 +311,8 @@ const Studyzone = () => {
             </DropdownMenu>
           </div>
         </div>
-        {/* Chat Messages */}
-
-        <ScrollArea className={"flex-1 p-4"} ref={chatRef}>
-          <div className="space-y-4">
-            {messages.map((message) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex gap-3"
-              >
-                <Avatar className={"h-9 w-9"}>
-                  <AvatarImage src={message.image}>
-                    <AvatarFallback className={"bg-slate-700 text-teal-300"}>
-                      {message.user.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </AvatarImage>
-                </Avatar>
-                <div>
-                  <div className="flex items-baseline">
-                    <span className="font-medium text-teal-300">
-                      {message.user}
-                    </span>
-                    <span className="ml-2 text-xs text-slate-500">
-                      {message.time}
-                    </span>
-                  </div>
-                  <p className="text-slate-300">{message.content}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </ScrollArea>
-
-        {/* Message Input  */}
-        <div className="p-4 bg-slate-800 border-t border-slate-700">
-          <form className="flex gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="text-slate-400 hover:text-teal-300"
-            >
-              <FileUp size={18} />
-            </Button>
-            <Input
-              type="text"
-              value={message}
-              //onchange={}
-              placeholder="Send a message..."
-              className={
-                "bg-slate-700 border-slate-600 focus-visible:ring-0 text-white"
-              }
-            />
-            <Button
-              type="submit"
-              size="icon"
-              className="bg-teal-600 hover:bg-teal-700 text-white"
-            >
-              <SendHorizontal size={18} />
-            </Button>
-          </form>
-        </div>
-
+        {/* Chat Messages Component */}
+          <Groupchat groupId = {groupId}/> 
         {/* Voice controls (shown only when in a call) */}
         {isInCall && (
           <motion.div
@@ -509,82 +359,20 @@ const Studyzone = () => {
           </motion.div>
         )}
       </div>
-
-      {/* Memebers Sidebar */}
-      <motion.div
-        className="bg-slate-800 border-l border-slate-700 w-60 flex-shrink-0 hidden md:block"
-        initial={{ width: 240 }}
-        animate={{ width: 240 }}
-        transition={{ duration: 0.2 }}
-      >
-        <div className="p-4 border-b border-slate-700">
-          <h3 className="text-lg font-medium text-white flex items-center">
-            <Users className="mr-2" size={18} /> Members
-          </h3>
-        </div>
-        <ScrollArea className="h-full">
-          <div className="p-2">
-            <h4 className="text-xs text-slate-400 font-medium ml-2 mb-1">
-              ONLINE — {members.filter((m) => m.status === "online").length}
-            </h4>
-            {members
-              .filter((m) => m.status === "online")
-              .map((member) => (
-                <motion.div
-                  key={member.id}
-                  className="flex items-center gap-2 p-2 rounded-md hover:bg-slate-700/50 cursor-pointer"
-                  whileHover={{ backgroundColor: "rgba(51, 65, 85, 0.5)" }}
-                >
-                  <div className="relative">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={member.image} />
-                      <AvatarFallback className="bg-slate-700 text-teal-300">
-                        {member.name.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-green-500 border border-slate-800"></span>
-                  </div>
-                  <span className="text-slate-300 text-sm">{member.name}</span>
-                </motion.div>
-              ))}
-            <h4 className="text-xs text-slate-400 font-medium ml-2 mb-1 mt-4">
-              OFFLINE — {members.filter((m) => m.status === "offline").length}
-            </h4>
-            {members
-              .filter((m) => m.status === "offline")
-              .map((member) => (
-                <motion.div
-                  key={member.id}
-                  className="flex items-center gap-2 p-2 rounded-md hover:bg-slate-700/50 cursor-pointer"
-                  whileHover={{ backgroundColor: "rgba(51, 65, 85, 0.5)" }}
-                >
-                  <div className="relative">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={member.image} />
-                      <AvatarFallback className="bg-slate-700 text-gray-500">
-                        {member.name.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-gray-500 border border-slate-800"></span>
-                  </div>
-                  <span className="text-slate-500 text-sm">{member.name}</span>
-                </motion.div>
-              ))}
-          </div>
-        </ScrollArea>
-      </motion.div>
-      <EditGroupDialogue 
+      {" "}
+      
+      <GroupMembers/>
+      <EditGroupDialogue
         open={showEditGroup}
         setOpen={setShowEditGroup}
-        groupId={groupData[activeGroup]?._id}
-        groupData={groupData[activeGroup]}
-       />
-
-       <AddMemberDialog 
-         open={showAddMember}
-         setOpen={setShowAddMember}
-         groupId={groupData[activeGroup]?._id }
-       />
+        groupId={activeGroup?._id}
+        groupData={activeGroup?._id}
+      />
+      <AddMemberDialog
+        open={showAddMember}
+        setOpen={setShowAddMember}
+        groupId={activeGroup?._id}
+      />
     </div>
   );
 };

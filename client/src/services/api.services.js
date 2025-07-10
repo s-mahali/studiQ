@@ -137,6 +137,11 @@ export const fetchGroupById = async (groupId) => {
   return response;
 }
 
+export const fetchUserJoinedGroup = async () => {
+    const response = await serviceAxiosInstance.get(`/group/userjoined`);
+    return response;
+}
+
 //get-connections
 export const fetchConnections = async () => {
   const response = await serviceAxiosInstance.get("/peers/connections");
@@ -146,5 +151,17 @@ export const fetchConnections = async () => {
 export const addMemberToGroup = async (data) => {
   const response = await serviceAxiosInstance.post(`/group/addmember`, data);
   return response;
+}
+
+//send-message in group
+export const sendMessageInGroup = async(groupId, ChannelName, data) => {
+    const response = await serviceAxiosInstance.post(`/group/chat/${groupId}/${ChannelName}`, data);
+    return response;
+}
+
+//get groupchat
+export const fetchGroupChat = async( groupId, ChannelName) => {
+    const response = await serviceAxiosInstance.get(`/group/chat/${groupId}/${ChannelName}`);
+    return response;
 }
 

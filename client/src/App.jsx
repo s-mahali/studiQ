@@ -16,6 +16,8 @@ import { setSocket } from "./redux/slicers/socketSlice";
 import { setOnlineUsers } from "./redux/slicers/chatSlice";
 import StudyZonePage from "./pages/StudyZonePage";
 import Dm from "./components/dm/dm";
+import CurrentGroupPage from "./pages/CurrentGroupPage";
+import Studyzone from "./components/studyzone/Studyzone";
 
 const browserRouter = createBrowserRouter([
   {
@@ -38,9 +40,16 @@ const browserRouter = createBrowserRouter([
         path: "/edit-profile",
         element: <EditProfilePage />,
       },
+      
       {
-        path: "/study-zone",
-        element: <StudyZonePage />,
+        path: "/study-zone/",
+        element: <CurrentGroupPage />,
+        children: [
+          {
+            path: ":groupId",
+            element: <Studyzone/>
+          }
+        ]
       },
 
       {

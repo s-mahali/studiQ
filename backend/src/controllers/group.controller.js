@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { imageKit } from "../config/imagekit.js";
 import { catchAsyncError } from "../middlewares/catchAsyncError.middleware.js";
 import ErrorHandler from "../middlewares/error.middleware.js";
@@ -205,7 +204,7 @@ export const getGroups = async (req, res, next) => {
   });
 };
 
-export const getUserJoinedGroups = async (req, res, next) => {
+export const getUserJoinedGroups = catchAsyncError(async (req, res, next) => {
   const userId = req.user._id;
   const user = await User.findById(userId);
   if (!user) {
@@ -227,7 +226,7 @@ export const getUserJoinedGroups = async (req, res, next) => {
     message: "Groups fetched successfully",
     payload: groups.length > 0 ? groups : [],
   });
-};
+});
 
 export const addMemberToGroup = async (req, res, next) => {
   const { joinKarnewalaKaID, groupId } = req.body;
