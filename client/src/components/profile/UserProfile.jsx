@@ -32,7 +32,7 @@ import {
   sendConnectionToPeers,
   userLogout,
 } from "@/services/api.services";
-import { setAuthUser, setStatus } from "@/redux/slicers/authSlice";
+import { setAuthUser} from "@/redux/slicers/authSlice";
 import { AnimatePresence, motion } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
@@ -120,7 +120,6 @@ export default function StudyProfilePage() {
       if (response.status === 200) {
         navigate("/");
         dispatch(setAuthUser(null));
-        dispatch(setStatus(false));
         dispatch(removeMessage([]));
       }
     } catch (error) {

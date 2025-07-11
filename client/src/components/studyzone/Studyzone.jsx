@@ -1,4 +1,4 @@
-import React, { useEffect,  useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -27,7 +27,7 @@ import {
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { fetchGroupById, fetchGroupChat} from "@/services/api.services";
+import { fetchGroupById, fetchGroupChat } from "@/services/api.services";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,63 +40,65 @@ import AddMemberDialog from "../group/AddMemberDialog";
 import Groupchat from "../group/groupchat/Groupchat";
 import GroupMembers from "../group/groupchat/GroupMembers";
 import { useNavigate, useParams } from "react-router-dom";
-import { setGroupMessage, setCurrentGroupId } from "@/redux/slicers/groupSlice";
+import { setGroupMessage, setCurrentGroupId, setGroupMembers } from "@/redux/slicers/groupSlice";
 
 const Studyzone = () => {
-  //const [activeGroup, setActiveGroup] = useState(0);
+  const [activeGroup, setActiveGroup] = useState(null);
   const [currentGroup, setCurrentGroup] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMuted, setIsmuted] = useState(false);
-  const [message, setMessage] = useState("");
   const [isInCall, setIsInCall] = useState(false);
   //fetchgroup state
-  const [groupData, setGroupData] = useState([]);
   const [showEditGroup, setShowEditGroup] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const [isMemberLoading, setIsMemberLoading] = useState(false);
   const dispatch = useDispatch();
-  
-  const user = useSelector((state) => state.auth.user);
-  const {groupId} = useParams();
-  const {userGroups} = useSelector((store) => store.group);
-  const navigate = useNavigate();
-  
 
-  //find the active group
-  const activeGroup = userGroups.find(group => group._id === groupId);
-  
+  const user = useSelector((state) => state.auth.user);
+  const { groupId } = useParams();
+  const { userGroups } = useSelector((store) => store.group);
+  const navigate = useNavigate();
+
   const handleGroupClick = (id) => {
     navigate(`/study-zone/${id}`);
-  }
+  };
 
   const toggleMute = () => setIsmuted(!isMuted);
   const toggleCall = () => setIsInCall(!isInCall);
- 
-  //fetch message-history and set groupId
-  useEffect(() => {
-    if(groupId){
-       dispatch(setCurrentGroupId(groupId));
-    }
-     
-  },[groupId, dispatch]);
-  
 
+  //set groupId and activeGroup
+  useEffect(() => {
+    if (groupId) {
+      dispatch(setCurrentGroupId(groupId));
+    }
+    const activeGroup = userGroups.find((group) => group._id === groupId);
+    setActiveGroup(activeGroup);
+  }, [groupId, dispatch]);
+  console.log("activeGroup", activeGroup)
+  console.log("groupId", groupId)
+
+  //fetch group members by fetchGroupByID
   useEffect(() => {
     const fetchUserGroupById = async () => {
+      setIsMemberLoading(true);
       try {
         const response = await fetchGroupById(groupId);
         if (response?.status === 200) {
-          console.log("group", response?.data?.payload);
+          console.log("fetchUserGroupById", response?.data?.payload);
+          dispatch(setGroupMembers(response?.data?.payload.members));
         }
       } catch (error) {
         console.error(error.message);
+      }finally{
+        setIsMemberLoading(false);
       }
     };
     fetchUserGroupById();
-  }, []);
+  }, [groupId]);
 
   return (
-    <div className=" min-h-screen bg-slate-900 flex overflow-hidden">
+    <div className="min-h-screen bg-slate-900 flex overflow-hidden">
       {/* Group selection sidebar */}
       <motion.div
         className="bg-gray-900 border-r border-gray-700 w-18 flex flex-col flex-shrink-0 items-center py-4"
@@ -104,43 +106,44 @@ const Studyzone = () => {
         animate={{ width: 72 }}
         transition={{ duration: 0.2 }}
       >
-        {userGroups && userGroups.map((group, i) => (
-          <TooltipProvider key={group._id}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <motion.button
-                  className={`w-12 h-12 rounded-full mb-4 flex items-center justify-center transition-all overflow-hidden ${
-                    activeGroup
-                      ? "ring-2 ring-offset-2 ring-offset-gray-900 ring-teal-600"
-                      : "bg-slate-800 hover:bg-slate-700"
-                  }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleGroupClick(group._id)}
-                >
-                  {group.coverImage ? (
-                    <img
-                      src={group.coverImage.url}
-                      alt={group.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div
-                      className={`w-full h-full flex items-center justify-center ${
-                        activeGroup ? "bg-teal-600" : "bg-slate-800"
-                      }`}
-                    >
-                      <span className="text-lg font-bold text-white">
-                        {group.title.substring(0, 2)}
-                      </span>
-                    </div>
-                  )}
-                </motion.button>
-              </TooltipTrigger>
-              <TooltipContent side="right">{group.title}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ))}
+        {userGroups &&
+          userGroups.map((group, i) => (
+            <TooltipProvider key={group._id}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <motion.button
+                    className={`w-12 h-12 rounded-full mb-4 flex items-center justify-center transition-all overflow-hidden ${
+                      activeGroup?._id === group?._id
+                        ? "ring-2 ring-offset-2 ring-offset-gray-900 ring-teal-600"
+                        : "bg-slate-800 hover:bg-slate-700"
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleGroupClick(group._id)}
+                  >
+                    {group.coverImage ? (
+                      <img
+                        src={group.coverImage.url}
+                        alt={group.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div
+                        className={`w-full h-full flex items-center justify-center ${
+                          activeGroup?._id === group?._id ? "bg-teal-600" : "bg-slate-800"
+                        }`}
+                      >
+                        <span className="text-lg font-bold text-white">
+                          {group.title.substring(0, 2)}
+                        </span>
+                      </div>
+                    )}
+                  </motion.button>
+                </TooltipTrigger>
+                <TooltipContent side="right">{group.title}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ))}
       </motion.div>
       {/* action sidebar */}
       <AnimatePresence initial={false}>
@@ -312,7 +315,7 @@ const Studyzone = () => {
           </div>
         </div>
         {/* Chat Messages Component */}
-          <Groupchat groupId = {groupId}/> 
+        <Groupchat groupId={groupId} />
         {/* Voice controls (shown only when in a call) */}
         {isInCall && (
           <motion.div
@@ -358,10 +361,8 @@ const Studyzone = () => {
             </TooltipProvider>
           </motion.div>
         )}
-      </div>
-      {" "}
-      
-      <GroupMembers/>
+      </div>{" "}
+      <GroupMembers groupId = {groupId} isLoading = {isMemberLoading} />
       <EditGroupDialogue
         open={showEditGroup}
         setOpen={setShowEditGroup}

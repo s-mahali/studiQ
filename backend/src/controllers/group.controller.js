@@ -174,21 +174,22 @@ export const deleteGroup = async (req, res, next) => {
   });
 };
 
-export const getGroupById = async (req, res, next) => {
+export const getGroupById = catchAsyncError(async (req, res, next) => {
   const { groupId } = req.params;
   const group = await Group.findById(groupId).populate({
-    path: "members",
+    path: "members.userId",
     select: "username profilePicture",
   });
   if (!group) {
     return next(new ErrorHandler("Group not found", 404));
   }
+  
   return res.status(200).json({
     success: true,
     message: "Group fetched successfully",
-    payload: group,
+    payload: group || [],
   });
-};
+});
 
 export const getGroups = async (req, res, next) => {
   console.log("getGroups called");
@@ -210,7 +211,7 @@ export const getUserJoinedGroups = catchAsyncError(async (req, res, next) => {
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
   }
-  // not clear which group It will return
+  
   const groups = await Group.find({
     members: {
       $elemMatch: {
@@ -220,7 +221,12 @@ export const getUserJoinedGroups = catchAsyncError(async (req, res, next) => {
         },
       },
     },
-  }).select("title description coverImage members createdBy channels");
+  }).select("title description coverImage members createdBy channels").populate({
+  path: "members.userId",
+  select: "username profilePicture"
+})
+     
+  
   return res.status(200).json({
     success: true,
     message: "Groups fetched successfully",

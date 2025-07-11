@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { FileUp, RadioReceiverIcon, SendHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { formatTime } from "@/lib/formatTime";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Groupchat = ({ groupId }) => {
   const socket = useSelector((state) => state.socketio.socket);
@@ -17,21 +18,27 @@ const Groupchat = ({ groupId }) => {
   console.log("groupMessages", groupMessages);
   const dispatch = useDispatch();
   const chatRef = useRef(null);
+  const { userGroups } = useSelector((store) => store.group);
+
   const [input, setInput] = useState("");
+  const [isMessageLoading, setIsMessageLoading] = useState(false);
+  const [currentGroup, setCurrentGroup] = useState(null);
 
   // fetch messsage history
   useEffect(() => {
     const fetchGroupChatMessage = async () => {
+      setIsMessageLoading(true);
       try {
         const res = await fetchGroupChat(groupId, "general");
         if (res?.status === 200) {
           dispatch(setGroupMessage(res?.data.messages));
-          console.log("message history", res.data.messages);
         }
       } catch (error) {
         console.error("error fetching groupChat", error?.message);
+        setIsMessageLoading(false); // need to confirm this
+      } finally {
+        setIsMessageLoading(false);
       }
-      
     };
     if (groupId) {
       fetchGroupChatMessage();
@@ -54,7 +61,7 @@ const Groupchat = ({ groupId }) => {
   //Listen for new group messages
   useEffect(() => {
     if (!socket) return;
-    
+
     socket.on("newGroupMessage", (data) => {
       dispatch(setAddNewMessage(data.message));
     });
@@ -88,47 +95,77 @@ const Groupchat = ({ groupId }) => {
       console.error("Error while sending message", error?.message);
     }
   };
+
+  //ownership
+  useEffect(() => {
+    const currentGroup = userGroups?.find((group) => group._id === groupId);
+    setCurrentGroup(currentGroup);
+    
+  }, [userGroups, user, groupId]);
+
+
+
   return (
-    <>
-      <ScrollArea className={"p-4"} viewportRef={chatRef} style={{ height: 'calc(100vh - 100px)' }} >
-        <div  className="space-y-4">
-          {groupMessages?.map((message) => (
-            <motion.div
-              key={message._id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex gap-3"
-            >
-              <Avatar className={"h-9 w-9"}>
-                <AvatarImage
-                  src={message.sender.profilePicture.url}
-                  className={"object-fill"}
-                />
-                <AvatarFallback className={"bg-slate-700 text-teal-300"}>
-                  {message?.sender?.username?.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="flex items-baseline">
-                  <span className={`font-medium  ${
-                    user?._id == message?.sender._id ? "text-purple-600" : "text-teal-300"
-                  }`}>
-                    {message.sender.username}
-                  </span>
-                  <span className="ml-2 text-xs text-slate-500">
-                    {formatTime(message.createdAt)}
-                  </span>
+    <div>
+      <ScrollArea
+        className={"p-4"}
+        viewportRef={chatRef}
+        style={{ height: "calc(100vh - 138px)" }}
+      >
+        <div className="space-y-4">
+          {isMessageLoading ? (
+             [1,2,3,4,5,6,7,8,9,10].map((item) => (
+                <div className="flex items-center gap-x-4" key={item}>
+                   <Skeleton className={"h-12 w-12 rounded-full"}/>
+                   <div className="space-y-2">
+                     <Skeleton className="h-4 w-[250px]"/>
+                     <Skeleton className="h-4 w-[250px]"/>
+                   </div>
                 </div>
-                <p className="text-slate-300">{message.content}</p>
-              </div>
-            </motion.div>
-          ))}
+             ))
+          ) : (
+            groupMessages?.map((message) => (
+              <motion.div
+                key={message._id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex gap-3"
+              >
+                <Avatar className={"h-9 w-9"}>
+                  <AvatarImage
+                    src={message.sender.profilePicture.url}
+                    className={"object-fill"}
+                  />
+                  <AvatarFallback className={"bg-slate-700 text-teal-300"}>
+                    {message?.sender?.username?.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="flex items-baseline">
+                    <span
+                      className={`font-medium  ${ currentGroup?.createdBy === message?.sender._id ? "text-blue-600" :
+                        user?._id == message?.sender._id
+                          ? "text-purple-600"
+                          : "text-teal-300"
+                      }`}
+                    >
+                      {message.sender.username}
+                    </span>
+                    <span className="ml-2 text-xs text-slate-500">
+                      {formatTime(message.createdAt)}
+                    </span>
+                  </div>
+                  <p className="text-slate-300">{message.content}</p>
+                </div>
+              </motion.div>
+            ))
+          )}
         </div>
       </ScrollArea>
 
       {/* Message Input  */}
-      <div className="p-4 bg-slate-800 border-t border-slate-700">
-        <form className="flex gap-2" onSubmit={handleSend}>
+      <div className="p-4 bg-slate-800 border-t border-slate-700 ">
+        <form className="flex gap-2 " onSubmit={handleSend}>
           <Button
             type="button"
             variant="ghost"
@@ -155,16 +192,10 @@ const Groupchat = ({ groupId }) => {
           </Button>
         </form>
       </div>
-    </>
+    </div>
   );
 };
 
 export default Groupchat;
 
-//TODO 
-//username color based on owner sender receiver 
-//loading state for message history rendering
-//currentgroup highlight
-//loading state when redirecting to another group
-//group member fetch with loading state 
 

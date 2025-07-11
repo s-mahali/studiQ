@@ -9,18 +9,17 @@ import { Outlet, useNavigate } from "react-router-dom";
 
 const HomePage = () => {
   const user = useSelector((state) => state.auth.user);
-  const isLogin = useSelector((state) => state.auth.status);
   const navigate = useNavigate();
   
   
 
   return (
-    <div className="flex-col">
-      {isLogin ? <LeftSideBar /> : <Header />}
-      <main className= {` ${isLogin ? "ml-0 md:ml-16" : "md:w-full"} min-h-screen`}>
+    <div className="flex flex-col min-h-screen">
+      {user ? <LeftSideBar /> : <Header />}
+      <main className= {` ${user ? "ml-0 md:ml-16" : "md:w-full"}`}>
         <Outlet />
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };
