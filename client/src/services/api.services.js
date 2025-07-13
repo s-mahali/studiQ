@@ -165,3 +165,31 @@ export const fetchGroupChat = async( groupId, ChannelName) => {
     return response;
 }
 
+//vc apis 
+//check active call in group 
+export const checkActiveCall = async (groupId) => {
+    const response = await serviceAxiosInstance.get(`/vc/participants/${groupId}`);
+    return response;
+}
+
+export const startVc = async (groupId) => {
+    const response = await serviceAxiosInstance.post(`/vc/start/${groupId}`);
+    return response;
+}
+
+export const joinVc = async (groupId, peerId) => {
+    const response = await serviceAxiosInstance.post(`/vc/join/${groupId}`,{ peerId});
+    return response;
+}
+
+export const leaveVc = async (groupId) => {
+    const response = await serviceAxiosInstance.post(`/vc/leave/${groupId}`);
+    return response;
+}
+
+export const mediaToggle = async (groupId, data) => {
+    const response = await serviceAxiosInstance.post(`/vc/media/${groupId}`, data);
+    return response;
+}
+
+

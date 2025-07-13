@@ -9,9 +9,11 @@ import {
 } from "../ui/tooltip";
 import {
   BookOpen,
+  Brain,
   Coffee,
   EditIcon,
   Headphones,
+  MessageCircleCode,
   MessageSquare,
   Mic,
   MicOff,
@@ -20,9 +22,11 @@ import {
   Plus,
   Settings,
   Share,
+  Speaker,
   UserPlus,
   Users,
   Video,
+  Volume2,
 } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
@@ -40,21 +44,25 @@ import AddMemberDialog from "../group/AddMemberDialog";
 import Groupchat from "../group/groupchat/Groupchat";
 import GroupMembers from "../group/groupchat/GroupMembers";
 import { useNavigate, useParams } from "react-router-dom";
-import { setGroupMessage, setCurrentGroupId, setGroupMembers } from "@/redux/slicers/groupSlice";
+import {
+  setGroupMessage,
+  setCurrentGroupId,
+  setGroupMembers,
+} from "@/redux/slicers/groupSlice";
+import MultiVc from "@/webrtc/Multy_party_vc";
 
 const Studyzone = () => {
   const [activeGroup, setActiveGroup] = useState(null);
-  const [currentGroup, setCurrentGroup] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [isMuted, setIsmuted] = useState(false);
-  const [isInCall, setIsInCall] = useState(false);
+
   //fetchgroup state
   const [showEditGroup, setShowEditGroup] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
-  const [isOwner, setIsOwner] = useState(false);
   const [isMemberLoading, setIsMemberLoading] = useState(false);
+  const [isChatwindowOpen, setIsChatwindowOpen] = useState(true);
+  const [isVcWindowOpen, setIsVcWindowOpen] = useState(false);
+  
   const dispatch = useDispatch();
-
   const user = useSelector((state) => state.auth.user);
   const { groupId } = useParams();
   const { userGroups } = useSelector((store) => store.group);
@@ -64,9 +72,6 @@ const Studyzone = () => {
     navigate(`/study-zone/${id}`);
   };
 
-  const toggleMute = () => setIsmuted(!isMuted);
-  const toggleCall = () => setIsInCall(!isInCall);
-
   //set groupId and activeGroup
   useEffect(() => {
     if (groupId) {
@@ -75,8 +80,8 @@ const Studyzone = () => {
     const activeGroup = userGroups.find((group) => group._id === groupId);
     setActiveGroup(activeGroup);
   }, [groupId, dispatch]);
-  console.log("activeGroup", activeGroup)
-  console.log("groupId", groupId)
+  console.log("activeGroup", activeGroup);
+  console.log("groupId", groupId);
 
   //fetch group members by fetchGroupByID
   useEffect(() => {
@@ -90,7 +95,7 @@ const Studyzone = () => {
         }
       } catch (error) {
         console.error(error.message);
-      }finally{
+      } finally {
         setIsMemberLoading(false);
       }
     };
@@ -130,7 +135,9 @@ const Studyzone = () => {
                     ) : (
                       <div
                         className={`w-full h-full flex items-center justify-center ${
-                          activeGroup?._id === group?._id ? "bg-teal-600" : "bg-slate-800"
+                          activeGroup?._id === group?._id
+                            ? "bg-teal-600"
+                            : "bg-slate-800"
                         }`}
                       >
                         <span className="text-lg font-bold text-white">
@@ -168,88 +175,47 @@ const Studyzone = () => {
             <nav className="p-2">
               <Button
                 variant="ghost"
-                className={`w-full justify-start mb-1 ${
-                  isInCall ? "bg-teal-900/50 text-teal-300" : "text-slate-300"
-                }`}
-                onClick={toggleCall}
+                className="w-full justify-start mb-1 text-slate-300 text-md"
+                onClick={() => {
+                  setIsChatwindowOpen(true);
+                  setIsVcWindowOpen(false);
+                  
+                }}
               >
-                <Video className="mr-2 h-4 w-4" />
-                {isInCall ? "Leave Study Room" : "Join Study Room"}
+                <MessageCircleCode className="mr-2" />
+                Team Chat
               </Button>
 
               <Button
                 variant="ghost"
-                className="w-full justify-start mb-1 text-slate-300"
+                className="w-full justify-start mb-1 text-slate-300 text-md"
+                onClick={() => {
+                  setIsVcWindowOpen(true);
+                  setIsChatwindowOpen(false);
+                  
+                }}
               >
-                <Plus className="mr-2 h-4 w-4" />
-                Create Room
+                <Volume2 className="mr-2 " />
+                Start Discussion
               </Button>
-
               <Button
                 variant="ghost"
-                className="w-full justify-start mb-1 text-slate-300"
+                className="w-full justify-start mb-1 text-slate-300 text-md"
               >
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Chat
-              </Button>
-
-              <Button
-                variant="ghost"
-                className="w-full justify-start mb-1 text-slate-300"
-              >
-                <Share className="mr-2 h-4 w-4" />
+                <Share className="mr-2" />
                 Share Resources
               </Button>
 
               <Button
                 variant="ghost"
-                className="w-full justify-start mb-1 text-slate-300"
+                className="w-full justify-start mb-1 text-slate-300 text-md"
               >
-                <Coffee className="mr-2 h-4 w-4" />
-                Break Room
+                <Brain className="mr-2" />
+                AI Assistance
               </Button>
             </nav>
 
             <Separator className="bg-slate-700 my-2" />
-
-            {/* {isInCall && (
-              <div className="p-4">
-                <h3 className="text-sm font-medium text-slate-400 mb-3">
-                  Currently in Voice Call
-                </h3>
-                <div className="space-y-2">
-                  {members
-                    .filter((m) => m.status === "online")
-                    .map((member) => (
-                      <div key={member.id} className="flex items-center gap-2">
-                        <div className="relative">
-                          <Avatar className="h-8 w-8 border border-slate-700">
-                            <AvatarImage src={member.image} />
-                            <AvatarFallback className="bg-slate-700 text-teal-300">
-                              {member.name.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span
-                            className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border border-slate-800 ${
-                              member.isSpeaking
-                                ? "bg-teal-400 animate-pulse"
-                                : "bg-emerald-500"
-                            }`}
-                          ></span>
-                        </div>
-                        <span className="text-sm text-slate-300">
-                          {member.name}
-                        </span>
-                        {member.isSpeaking && (
-                          <span className="ml-auto">
-                            <Mic className="h-3 w-3 text-teal-400" />
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )} */}
           </motion.div>
         )}
       </AnimatePresence>
@@ -315,54 +281,11 @@ const Studyzone = () => {
           </div>
         </div>
         {/* Chat Messages Component */}
-        <Groupchat groupId={groupId} />
+        { isChatwindowOpen && <Groupchat groupId={groupId} />}
         {/* Voice controls (shown only when in a call) */}
-        {isInCall && (
-          <motion.div
-            className="p-3 bg-gray-900 border-t border-slate-700 flex items-center justify-center gap-4"
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-          >
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={toggleMute}
-                    variant="ghost"
-                    size="icon"
-                    className={`rounded-full h-10 w-10 ${
-                      isMuted
-                        ? "bg-red-500 hover:bg-red-600"
-                        : "bg-teal-600 hover:bg-teal-700"
-                    }`}
-                  >
-                    {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{isMuted ? "Unmute" : "Mute"}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={toggleCall}
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full h-10 w-10 bg-red-500 hover:bg-red-600"
-                  >
-                    <Headphones size={18} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Leave Call</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </motion.div>
-        )}
+        { isVcWindowOpen && <MultiVc groupId={groupId} />}
       </div>{" "}
-      <GroupMembers groupId = {groupId} isLoading = {isMemberLoading} />
+      <GroupMembers groupId={groupId} isLoading={isMemberLoading} />
       <EditGroupDialogue
         open={showEditGroup}
         setOpen={setShowEditGroup}

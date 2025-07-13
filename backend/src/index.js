@@ -12,6 +12,7 @@ import { messageRouter } from "./routes/message.route.js";
 import { groupRouter } from "./routes/group.route.js";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
 import { successHandlerMiddleware } from "./middlewares/success.middleware.js";
+import { groupvcRouter } from "./routes/groupvc.route.js";
 
 dotenv.config();
 
@@ -29,8 +30,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Middleware to parse URL-encoded requests
 app.use(cookieParser()); // Middleware to parse cookies
 
+//health-check
 app.get("/", (req, res) => {
-  res.send("Hello, World!");
+  res.send("I am healthy :)");
 });
 
 app.use(successHandlerMiddleware);
@@ -39,6 +41,7 @@ app.use("/api/peers", peersRouter);
 app.use("/api/userprofile", userProfileRouter);
 app.use("/api/chat", messageRouter);
 app.use("/api/group", groupRouter);
+app.use("/api/vc", groupvcRouter);
 
 app.use(errorMiddleware) // global error handler
 

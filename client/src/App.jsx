@@ -18,6 +18,7 @@ import StudyZonePage from "./pages/StudyZonePage";
 import Dm from "./components/dm/dm";
 import CurrentGroupPage from "./pages/CurrentGroupPage";
 import Studyzone from "./components/studyzone/Studyzone";
+import PeerConnection from "./webrtc/Peer";
 
 const browserRouter = createBrowserRouter([
   {
@@ -56,6 +57,10 @@ const browserRouter = createBrowserRouter([
         path: "/dm/:receiverId",
         element: <Dm />,
       },
+      {
+        path: "/webrtc",
+        element: <PeerConnection/>
+      }
     ],
   },
   {

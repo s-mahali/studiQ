@@ -27,6 +27,7 @@
     "dayjs": "^1.11.13",
     "framer-motion": "^12.7.4",
     "lucide-react": "^0.501.0",
+    "peerjs": "^1.5.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.1",
