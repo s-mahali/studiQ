@@ -50,6 +50,7 @@ import {
   setGroupMembers,
 } from "@/redux/slicers/groupSlice";
 import MultiVc from "@/webrtc/Multy_party_vc";
+import Aiwindow from "../ai/Aiwindow";
 
 const Studyzone = () => {
   const [activeGroup, setActiveGroup] = useState(null);
@@ -61,12 +62,14 @@ const Studyzone = () => {
   const [isMemberLoading, setIsMemberLoading] = useState(false);
   const [isChatwindowOpen, setIsChatwindowOpen] = useState(true);
   const [isVcWindowOpen, setIsVcWindowOpen] = useState(false);
-  
+  const [isAiWindowOpen, setIsAiWindowOpen] = useState(false);
+
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const { groupId } = useParams();
   const { userGroups } = useSelector((store) => store.group);
   const navigate = useNavigate();
+  console.log("aiwindow", isAiWindowOpen);
 
   const handleGroupClick = (id) => {
     navigate(`/study-zone/${id}`);
@@ -179,7 +182,7 @@ const Studyzone = () => {
                 onClick={() => {
                   setIsChatwindowOpen(true);
                   setIsVcWindowOpen(false);
-                  
+                  setIsAiWindowOpen(false);
                 }}
               >
                 <MessageCircleCode className="mr-2" />
@@ -192,7 +195,7 @@ const Studyzone = () => {
                 onClick={() => {
                   setIsVcWindowOpen(true);
                   setIsChatwindowOpen(false);
-                  
+                  setIsAiWindowOpen(false);
                 }}
               >
                 <Volume2 className="mr-2 " />
@@ -209,6 +212,7 @@ const Studyzone = () => {
               <Button
                 variant="ghost"
                 className="w-full justify-start mb-1 text-slate-300 text-md"
+                onClick={() => {setIsAiWindowOpen(true); setIsChatwindowOpen(false); setIsVcWindowOpen(false);}}
               >
                 <Brain className="mr-2" />
                 AI Assistance
@@ -222,7 +226,7 @@ const Studyzone = () => {
       {/* Main content Area  */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="bg-slate-800 border-b border-slate-700 p-4 flex justify-between items-center">
+        {!isAiWindowOpen && <div className="bg-slate-800 border-b border-slate-700 p-4 flex justify-between items-center">
           <div className="flex items-center">
             <Button
               variant={"ghost"}
@@ -279,11 +283,13 @@ const Studyzone = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </div>
+        </div>}
         {/* Chat Messages Component */}
-        { isChatwindowOpen && <Groupchat groupId={groupId} />}
+        {isChatwindowOpen && <Groupchat groupId={groupId} />}
+       
+        {isAiWindowOpen && <Aiwindow  />}
         {/* Voice controls (shown only when in a call) */}
-        { isVcWindowOpen && <MultiVc groupId={groupId} />}
+        {isVcWindowOpen && <MultiVc groupId={groupId} />}
       </div>{" "}
       <GroupMembers groupId={groupId} isLoading={isMemberLoading} />
       <EditGroupDialogue
