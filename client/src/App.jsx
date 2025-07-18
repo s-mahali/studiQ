@@ -15,10 +15,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { setSocket } from "./redux/slicers/socketSlice";
 import { setOnlineUsers } from "./redux/slicers/chatSlice";
 import StudyZonePage from "./pages/StudyZonePage";
-import Dm from "./components/dm/dm";
 import CurrentGroupPage from "./pages/CurrentGroupPage";
 import Studyzone from "./components/studyzone/Studyzone";
 import PeerConnection from "./webrtc/Peer";
+import MemberSideBar from "./components/dm/MemberSideBar";
 
 const browserRouter = createBrowserRouter([
   {
@@ -54,8 +54,8 @@ const browserRouter = createBrowserRouter([
       },
 
       {
-        path: "/dm/:receiverId",
-        element: <Dm />,
+        path: "/dm/:userId",
+        element: <MemberSideBar />,
       },
       {
         path: "/webrtc",

@@ -18,6 +18,7 @@ const Groupchat = ({ groupId }) => {
   console.log("groupMessages", groupMessages);
   const dispatch = useDispatch();
   const chatRef = useRef(null);
+  const scrollAreaRef = useRef(null);
   const { userGroups } = useSelector((store) => store.group);
 
   const [input, setInput] = useState("");
@@ -70,11 +71,13 @@ const Groupchat = ({ groupId }) => {
     };
   }, [socket, groupId, dispatch]);
 
+  //auto-scroll to bottom
+  const scrollToBottom = () => {
+    chatRef.current?.scrollIntoView({ behavior: "smooth" });
+  }
   useEffect(() => {
-    if (chatRef.current) {
-      chatRef.current.scrollTop = chatRef.current.scrollHeight;
-    }
-  }, [groupMessages]);
+     scrollToBottom();
+  }, [groupMessages, isMessageLoading]);
 
   //send message
   const handleSend = async (e) => {
@@ -106,10 +109,10 @@ const Groupchat = ({ groupId }) => {
 
 
   return (
-    <div>
+    <div className="">
       <ScrollArea
         className={"p-4"}
-        viewportRef={chatRef}
+        ref={scrollAreaRef}
         style={{ height: "calc(100vh - 138px)" }}
       >
         <div className="space-y-4">
@@ -161,10 +164,11 @@ const Groupchat = ({ groupId }) => {
             ))
           )}
         </div>
+        <div ref={chatRef}/>
       </ScrollArea>
 
       {/* Message Input  */}
-      <div className="p-4 bg-slate-800 border-t border-slate-700 ">
+      <div className="p-4 bg-slate-800 border-t border-slate-700 mb-15 lg:mb-0 ">
         <form className="flex gap-2 " onSubmit={handleSend}>
           <Button
             type="button"

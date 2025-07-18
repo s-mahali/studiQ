@@ -9,13 +9,21 @@ import { useSelector } from "react-redux";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isLogin = useSelector((state) => state.auth.status);
+  const user = useSelector((state) => state.auth.user);
   
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
   return (
-    <header className="fixed top-0 left-0 w-full z-50 bg-transparent">
+    user ? 
+    (
+    <>
+     
+    </>
+    )
+    : 
+    (
+      <header className="fixed top-0 left-0 w-full z-50 bg-transparent">
       <div className="max-w-7xl mx-auto flex items-center py-4 px-6">
         <span>
           <Logo />
@@ -24,10 +32,10 @@ const Header = () => {
         {/* Desktop navigation */}
         <nav className="hidden md:flex items-center gap-8 mx-auto">
           <ul className="flex gap-6">
-            {["Home", "Features", "Pricing", "About"].map((item) => (
+            {["Home", "Features", "Contact", "About"].map((item) => (
               <li key={item}>
                 <Link
-                  to={`/${item.toLowerCase()}`}
+                  to={`#`}
                   className="text-white hover:text-teal-400 font-medium transition-colors duration-200"
                 >
                   {item}
@@ -35,7 +43,7 @@ const Header = () => {
               </li>
             ))}
           </ul>
-          {!isLogin && (
+          {!user && (
             <Link to="/signup">
               <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:opacity-90 text-white px-6 border-b-2 border-white cursor-pointer">
                 Get Started
@@ -61,10 +69,10 @@ const Header = () => {
       {isMenuOpen && (
         <div className="md:hidden absolute top-full left-0 right-0 bg-black/80 backdrop-blur-md border-b shadow-md py-7 px-6 z-40 text-center">
           <ul className="flex flex-col gap-4">
-            {["Home", "Features", "Pricing", "About"].map((item) => (
+            {["Home", "Features", "Contact", "About"].map((item) => (
               <li key={item}>
                 <Link
-                  to={`/${item.toLowerCase()}`}
+                  to={`#`}
                   className="text-white hover:text-teal-400 font-medium block py-2 transition-colors duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -83,6 +91,8 @@ const Header = () => {
         </div>
       )}
     </header>
+    )
+    
   );
 };
 

@@ -1,4 +1,4 @@
-import { BookOpen, LogOut, PlusSquare, UserLock } from "lucide-react";
+import { BookOpen, LogOut, MessageCirclePlus, PlusSquare, UserLock } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useLocation } from "react-router-dom";
@@ -43,6 +43,11 @@ const LeftSideBar = () => {
       text: "profile",
       path: `/profile/${userId}`,
     },
+    {
+       icon: <MessageCirclePlus size={22}/>,
+       text: "message",
+       path: `/dm/${userId}`,
+    },
 
     {
       icon: <BookOpen size={22} />,
@@ -73,6 +78,9 @@ const LeftSideBar = () => {
       case "profile":
         navigate(`/profile/${userId}`);
         break;
+      case "message":
+        navigate(`/dm/${userId}`); 
+        break; 
       case "studyZone":
         navigate(`/study-zone/${groupId}`);
         break;
@@ -183,7 +191,7 @@ const LeftSideBar = () => {
                 />
                 )}
               </div>
-              <span className="text-xs mt-1">{item.text}</span>
+              {/* <span className="text-xs mt-1">{item.text}</span> */}
               </div>
             );
           })}
@@ -191,7 +199,7 @@ const LeftSideBar = () => {
       </div>
 
       {/* Add padding to content on mobile to account for bottom bar */}
-      <div className="md:hidden pb-16" />
+      <div className="" />
       <CreateGroup open={open} setOpen={setOpen} />
     </>
   );

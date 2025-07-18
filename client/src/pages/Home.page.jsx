@@ -19,7 +19,7 @@ const HomePage = () => {
       <main className= {` ${user ? "ml-0 md:ml-16" : "md:w-full"}`}>
         <Outlet />
       </main>
-      {/* <Footer /> */}
+      {user ? <></> : <Footer/>}
     </div>
   );
 };

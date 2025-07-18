@@ -97,9 +97,12 @@ const Login = () => {
             <div className="flex justify-center mb-6">
               <Logo />
             </div>
-            <p className="text-gray-400 mt-2">
+            <div>
+              <h2 className="font-bold text-2xl">Login</h2>
+              <p className="text-gray-400 mt-2">
               Join thousands of students worldwide
             </p>
+            </div>
           </div>
 
           {error && (

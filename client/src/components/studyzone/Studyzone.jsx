@@ -9,6 +9,7 @@ import {
 } from "../ui/tooltip";
 import {
   BookOpen,
+  Bot,
   Brain,
   Coffee,
   EditIcon,
@@ -63,6 +64,28 @@ const Studyzone = () => {
   const [isChatwindowOpen, setIsChatwindowOpen] = useState(true);
   const [isVcWindowOpen, setIsVcWindowOpen] = useState(false);
   const [isAiWindowOpen, setIsAiWindowOpen] = useState(false);
+  const [totalOnlineUsers, setTotalOnlineUsers] = useState(0);
+  const [isOwner, setIsowner] = useState(false);
+  const [showSideBar, setShowSideBar] = useState(true);
+  
+  // State to track if screen is mobile or tablet size
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
+
+  // Update mobile/tablet state on window resize
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobileOrTablet(window.innerWidth <= 768);
+    };
+    
+    // Set initial value
+    checkScreenSize();
+    
+    // Add event listener for window resize
+    window.addEventListener('resize', checkScreenSize);
+    
+    // Clean up
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
@@ -70,9 +93,33 @@ const Studyzone = () => {
   const { userGroups } = useSelector((store) => store.group);
   const navigate = useNavigate();
   console.log("aiwindow", isAiWindowOpen);
+  const {onlineUsers} = useSelector((store) => store.chat);
+  const {groupMembers} = useSelector((store) => store.group);
 
   const handleGroupClick = (id) => {
     navigate(`/study-zone/${id}`);
+  };
+
+  // Function to handle tab switching with auto-collapse
+  const handleTabSwitch = (tabType) => {
+    if (tabType === 'chat') {
+      setIsChatwindowOpen(true);
+      setIsVcWindowOpen(false);
+      setIsAiWindowOpen(false);
+    } else if (tabType === 'voice') {
+      setIsVcWindowOpen(true);
+      setIsChatwindowOpen(false);
+      setIsAiWindowOpen(false);
+    } else if (tabType === 'ai') {
+      setIsAiWindowOpen(true);
+      setIsChatwindowOpen(false);
+      setIsVcWindowOpen(false);
+    }
+    
+    // Auto-collapse sidebar on mobile/tablet
+    if (isMobileOrTablet) {
+      setSidebarCollapsed(true);
+    }
   };
 
   //set groupId and activeGroup
@@ -82,9 +129,11 @@ const Studyzone = () => {
     }
     const activeGroup = userGroups.find((group) => group._id === groupId);
     setActiveGroup(activeGroup);
+    if(activeGroup?.members?.some((member) => member.userId._id === user._id && member.role === "owner")){
+       setIsowner(true);
+    }
   }, [groupId, dispatch]);
-  console.log("activeGroup", activeGroup);
-  console.log("groupId", groupId);
+   
 
   //fetch group members by fetchGroupByID
   useEffect(() => {
@@ -104,6 +153,13 @@ const Studyzone = () => {
     };
     fetchUserGroupById();
   }, [groupId]);
+
+
+  //total online users 
+  useEffect(() => {
+      const totalOnlineUsers =   groupMembers.filter((member) => onlineUsers.includes(member.userId._id)).length;
+      setTotalOnlineUsers(totalOnlineUsers);
+    },[onlineUsers, groupMembers, groupId]);
 
   return (
     <div className="min-h-screen bg-slate-900 flex overflow-hidden">
@@ -179,11 +235,7 @@ const Studyzone = () => {
               <Button
                 variant="ghost"
                 className="w-full justify-start mb-1 text-slate-300 text-md"
-                onClick={() => {
-                  setIsChatwindowOpen(true);
-                  setIsVcWindowOpen(false);
-                  setIsAiWindowOpen(false);
-                }}
+                onClick={() => handleTabSwitch('chat')}
               >
                 <MessageCircleCode className="mr-2" />
                 Team Chat
@@ -192,11 +244,7 @@ const Studyzone = () => {
               <Button
                 variant="ghost"
                 className="w-full justify-start mb-1 text-slate-300 text-md"
-                onClick={() => {
-                  setIsVcWindowOpen(true);
-                  setIsChatwindowOpen(false);
-                  setIsAiWindowOpen(false);
-                }}
+                onClick={() => handleTabSwitch('voice')}
               >
                 <Volume2 className="mr-2 " />
                 Start Discussion
@@ -212,7 +260,7 @@ const Studyzone = () => {
               <Button
                 variant="ghost"
                 className="w-full justify-start mb-1 text-slate-300 text-md"
-                onClick={() => {setIsAiWindowOpen(true); setIsChatwindowOpen(false); setIsVcWindowOpen(false);}}
+                onClick={() => handleTabSwitch('ai')}
               >
                 <Brain className="mr-2" />
                 AI Assistance
@@ -224,31 +272,31 @@ const Studyzone = () => {
         )}
       </AnimatePresence>
       {/* Main content Area  */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        {!isAiWindowOpen && <div className="bg-slate-800 border-b border-slate-700 p-4 flex justify-between items-center">
+      <div className="flex-1 flex flex-col ">
+        {/* Header  */}
+        <div className="bg-slate-800 border-b border-slate-700 p-4 flex justify-between items-center">
           <div className="flex items-center">
             <Button
               variant={"ghost"}
               size="icon"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className={"mr-2 text-slate-400 hover:text-white"}
+              className={"mr-2 text-white-400 hover:text-white "}
             >
               {sidebarCollapsed ? (
-                <PanelLeftOpen size={20} />
+                <PanelLeftOpen size={24} className="font-bold" />   
               ) : (
-                <PanelLeftClose size={20} />
+                <PanelLeftClose size={24} className="font-bold" /> 
               )}
             </Button>
-            <h2 className="text-white font-medium"># general</h2>
+            <h2 className="text-white text-xl font-mono font-medium">{isAiWindowOpen ? ("AI Code Assistant") : "# General" }</h2>
           </div>
 
           <div className="flex items-center gap-2">
             <Badge
               variant={"outline"}
-              className={"bg-slate-700/50 text-teal-300 border-teal-800"}
+              className={"bg-slate-700/50 text-teal-300 border-teal-800 font-mono"}
             >
-              5 online
+              {isAiWindowOpen ? <Bot className="w-8 h-8 text-teal-400 "/> : `${totalOnlineUsers} online`}
             </Badge>
 
             <DropdownMenu>
@@ -258,7 +306,7 @@ const Studyzone = () => {
                   size="icon"
                   className={"text-slate-400 hover:text-white"}
                 >
-                  <Settings size={18} />
+                  {isOwner && <Settings size={18} />}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -283,26 +331,32 @@ const Studyzone = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </div>}
-        {/* Chat Messages Component */}
+        </div>
+       { /* Chat Messages Component */}
         {isChatwindowOpen && <Groupchat groupId={groupId} />}
        
-        {isAiWindowOpen && <Aiwindow  />}
+        {isAiWindowOpen && <Aiwindow groupId={groupId} />}
         {/* Voice controls (shown only when in a call) */}
         {isVcWindowOpen && <MultiVc groupId={groupId} />}
       </div>{" "}
       <GroupMembers groupId={groupId} isLoading={isMemberLoading} />
-      <EditGroupDialogue
+
+      {/* //Edit Group and add memeber components */}
+      { isOwner && 
+        <>
+        <EditGroupDialogue
         open={showEditGroup}
         setOpen={setShowEditGroup}
         groupId={activeGroup?._id}
-        groupData={activeGroup?._id}
+        groupData={activeGroup}
       />
       <AddMemberDialog
         open={showAddMember}
         setOpen={setShowAddMember}
-        groupId={activeGroup?._id}
+        groupId={activeGroup}
       />
+        </>
+      }
     </div>
   );
 };

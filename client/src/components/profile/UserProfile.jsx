@@ -38,6 +38,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { removeMessage } from "@/redux/slicers/chatSlice";
+import { formatTime } from "@/lib/formatTime";
 
 export default function StudyProfilePage() {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -53,6 +54,7 @@ export default function StudyProfilePage() {
   const [messageLoading, setMessageLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isMember, setIsMember] = useState(false);
   const pfpRef = useRef();
   const [pfpLoading, setPfpLoading] = useState(false);
   const { userId } = useParams();
@@ -61,6 +63,10 @@ export default function StudyProfilePage() {
   const navigate = useNavigate();
   const authorId = useSelector((state) => state.auth.user?._id);
   const isAuthor = authorId === userId;
+  const {userGroups} = useSelector((store) => store.group);
+  const {groupMembers} = useSelector((store) => store.group);
+  console.log(groupMembers);
+  const {user} = useSelector((store) => store.auth);
 
   const fileChangeHandler = (e) => {
     const file = e.target.files?.[0];
@@ -74,14 +80,14 @@ export default function StudyProfilePage() {
     async function fetchProfileData() {
       try {
         if (!userId) {
-          toast.error("Invalid user ID");
+          
           setProfileLoading(false);
           return;
         }
         const response = await fetchUserProfile(userId);
         if (response?.status === 200) {
           setProfileData(response?.data.payload);
-          toast.success(response.data.message);
+          
           if (userId === authorId) {
             dispatch(setAuthUser(response.data.payload));
           }
@@ -269,12 +275,19 @@ export default function StudyProfilePage() {
   useEffect(() => {
     incomingRequestHandler();
     sentRequestHandler();
-  }, []);
+  }, [isAuthor, profileData, incomingRequest, sendRequest, userId, authorId]);
+
+  useEffect(() => {
+      const isMember = groupMembers?.includes(user?._id);
+      setIsMember(isMember);
+  },[])
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {profileLoading ? (
-        <Loader2 className="animate-spin mx-auto mt-10 w-10 h-10 text-teal-400" />
+        <div className="flex min-h-screen justify-center items-center">
+          <Loader2 className="animate-spin  w-16 h-16 text-teal-400" />
+        </div>
       ) : (
         <div className="bg-gradient-to-b from-teal-900/30 to-transparent py-8">
           <motion.div
@@ -491,14 +504,15 @@ export default function StudyProfilePage() {
                         <div className="flex justify-between mb-2">
                           <span className="text-gray-400">Progress</span>
                           <span className="text-teal-400 font-medium">
-                            {profileData?.activity.progress || []}%
+                            {/* {profileData?.activity.progress || 70}% */}
+                            70%
                           </span>
                         </div>
                         <div className="h-2 bg-gray-700 rounded-full mb-6">
                           <div
                             className="h-2 bg-gradient-to-r from-teal-500 to-teal-300 rounded-full"
                             style={{
-                              width: `${profileData?.activity.progress}%`,
+                              width: `70%`,
                             }}
                           ></div>
                         </div>
@@ -506,10 +520,11 @@ export default function StudyProfilePage() {
                         <div className="flex justify-between text-sm">
                           <div>
                             <div className="text-gray-400">
-                              Total Study Time
+                              Total Study Hours
                             </div>
                             <div className="text-lg font-semibold">
-                              {profileData?.activity.totalStudyTime}
+                              {/* {profileData?.activity.totalStudyTime} || 70 */}
+                              150
                             </div>
                           </div>
                           <div className="text-right">
@@ -576,15 +591,18 @@ export default function StudyProfilePage() {
                       Study Groups
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {profileData?.groups.map((group) => (
+                      {userGroups && userGroups.map((group) => (
                         <div
                           key={group.id}
                           className="bg-gray-700/50 p-4 rounded-lg flex items-center justify-between"
                         >
-                          <span>{group.name}</span>
-                          <button className="text-teal-400 hover:text-teal-300 transition-colors">
+                          <span>{group.title}</span>
+                          {
+                           isMember || isAuthor &&
+                            <Link className="text-teal-400 hover:text-teal-300 transition-colors" to={`/study-zone/${group?._id}`}>
                             View
-                          </button>
+                          </Link>
+                          }
                         </div>
                       ))}
                     </div>

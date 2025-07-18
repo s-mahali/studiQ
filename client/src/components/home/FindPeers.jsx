@@ -112,11 +112,9 @@ const FindPeers = ({ className }) => {
             setSentRequestIds(response?.data.pendingRequests);
           }
           dispatch(setPeers(response?.data.peerlist));
-          toast.success(response?.data.message);
         }
       } catch (error) {
         console.error("error fetching perrlist", error.message);
-        toast.error(error.response.data.message);
       } finally {
         setLoading(false);
       }
@@ -194,7 +192,9 @@ const FindPeers = ({ className }) => {
   return (
     <div className={"pt-16  px-4 bg-slate-900 " + className || ""}>
       {loading ? (
-        "loading..."
+        <div className="flex min-h-screen justify-center items-center">
+          <Loader2 className="animate-spin  w-16 h-16 text-teal-400" />
+        </div>
       ) : (
         <div className="mx-auto max-w-7xl">
           {/* section Header */}

@@ -72,7 +72,7 @@ export const getMessage =  catchAsyncError(async (req, res, next) => {
   })
   console.log("conversationMessage", conversation?.messages);
   if (!conversation) {
-    return next(new ErrorHandler("conversation not found", 404));
+    return res.success([], "Messages fetched successfully");
   }
   return res.success(conversation.messages, "Messages fetched successfully");
 });

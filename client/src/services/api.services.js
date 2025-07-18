@@ -1,4 +1,3 @@
-import { data } from "react-router-dom";
 import {
   serviceAxiosInstance,
   serviceAxiosInstanceForFileUpload,
@@ -190,6 +189,12 @@ export const leaveVc = async (groupId) => {
 export const mediaToggle = async (groupId, data) => {
     const response = await serviceAxiosInstance.post(`/vc/media/${groupId}`, data);
     return response;
+}
+
+//AI Coding explainCode api 
+export const fetchExplainCode = async (data, groupId) => {
+      const response = await serviceAxiosInstance.post(`/group/aichat/${groupId}`, data);
+      return response;
 }
 
 

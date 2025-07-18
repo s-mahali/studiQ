@@ -16,11 +16,11 @@ const GroupMembers = ({groupId, isLoading}) => {
   const [onlineMembers, setOnlineMembers] = useState([]);
   const [offlineMembers, setOfflineMembers] = useState([]);
   const memberRef = useRef(null);
-
+  const scrollAreaRef = useRef(null);
+  
+  
    useEffect(() => {
-      if (memberRef.current) {
-        memberRef.current.scrollTop = memberRef.current.scrollHeight;
-      }
+      memberRef.current.scrollTop = memberRef.current.scrollHeight;
     }, [groupMembers]);
 
   useEffect(() => {
@@ -47,7 +47,7 @@ const GroupMembers = ({groupId, isLoading}) => {
             <Users className="mr-2" size={18} /> Members
           </h3>
         </div>
-        <ScrollArea className="h-full" viewportRef={memberRef} 
+        <ScrollArea className="" ref={scrollAreaRef} 
           style={{height: "calc(100vh - 100px)"}}>
           <div className="p-2">
             <h4 className="text-xs text-slate-400 font-medium ml-2 mb-1">
@@ -125,6 +125,7 @@ const GroupMembers = ({groupId, isLoading}) => {
               
             
           </div>
+          <div ref={memberRef}/>
         </ScrollArea>
       </motion.div>
     </>

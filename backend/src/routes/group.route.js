@@ -13,6 +13,7 @@ import {
 } from "../controllers/group.controller.js";
 import { upload } from "../utils/multer.js";
 import { getGroupMessage, sendGroupMessage } from "../controllers/message.controller.js";
+import { explainCode } from "../service/genai.js";
 
 export const groupRouter = Router();
 groupRouter.use(isAuthenticated);
@@ -26,3 +27,4 @@ groupRouter.post("/addmember", addMemberToGroup);
 groupRouter.get("/:groupId/get", getGroupById);
 groupRouter.post("/chat/:groupId/:channelName", sendGroupMessage);
 groupRouter.get("/chat/:groupId/:channelName", getGroupMessage);
+groupRouter.post("/aichat/:groupId", explainCode);
