@@ -8,6 +8,7 @@ import {
   Calendar,
   Compass,
   Share2,
+  Brain,
 } from "lucide-react";
 
 const Features = () => {
@@ -30,10 +31,10 @@ const Features = () => {
       description: "Exchange study materials, notes, and helpful resources",
     },
     {
-      icon: <Calendar className="w-10 h-10 text-teal-400 mb-4" />,
-      title: "Study Scheduling",
+      icon: <Brain className="w-10 h-10 text-teal-400 mb-4" />,
+      title: "AI Coding Assistance",
       description:
-        "Plan and organize your study sessions with integrated calendars",
+        "Solve and understand programming assignments with AI coding assistance",
     },
     {
       icon: <Compass className="w-10 h-10 text-teal-400 mb-4" />,

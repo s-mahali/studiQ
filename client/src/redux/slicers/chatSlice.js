@@ -4,7 +4,7 @@ const initialState = {
     targetUser: null,
     onlineUsers: [],
     messages: [],
-    
+    notification: null,
 }
 
 const chatSlice = createSlice({
@@ -20,9 +20,20 @@ const chatSlice = createSlice({
         setMessages(state, action) {
             state.messages = action.payload;
         },
+         setAddNewMessage: (state, action) => {
+                        state.messages.push(action.payload);
+                    },
        
         removeMessage(state){
             state.messages = [];
+        },
+
+        setNotification(state, action) {
+            state.notification = action.payload;
+        },
+
+        removeNotification(state) {
+            state.notification = null;
         },
         
 
@@ -30,5 +41,5 @@ const chatSlice = createSlice({
     }
 });
 
-export const { setTargetUser, setOnlineUsers, setMessages, removeMessage } = chatSlice.actions;
+export const { setTargetUser, setOnlineUsers, setMessages, removeMessage, setAddNewMessage, setNotification, removeNotification } = chatSlice.actions;
 export default chatSlice.reducer;

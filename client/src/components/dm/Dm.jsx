@@ -19,7 +19,7 @@ import { useParams } from "react-router-dom";
 import { fetchDm, fetchUserProfile, sendDm } from "@/services/api.services";
 import { useDispatch, useSelector } from "react-redux";
 import useGetRTM from "@/hooks/useGetRTM";
-import { setMessages } from "@/redux/slicers/chatSlice";
+import { setAddNewMessage, setMessages } from "@/redux/slicers/chatSlice";
 import { format, isToday, isYesterday } from "date-fns";
 import useGetAllMessages from "@/hooks/useGetAllMessages";
 
@@ -35,19 +35,20 @@ const Dm = ({receiverId, onBack}) => {
   const messages = useSelector((state) => state.chat.messages);
   const currentUser = useSelector((state) => state.auth.user);
   const onlineUsers = useSelector((state) => state.chat.onlineUsers);
+  const scrollAreaRef = useRef(null);
 
   const dispatch = useDispatch();
 
   // Scroll to bottom when message changes
+const scrollToBottom = () => {
+    chatRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    if (chatRef.current) {
-      chatRef.current.scrollTo({
-        top: chatRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  }, [messages]);
+    scrollToBottom();
+  }, [messages, isLoading]);
+
+  
 
   // Simple date formatting
   const formatMessageDate = (timestamp) => {
@@ -102,7 +103,7 @@ const Dm = ({receiverId, onBack}) => {
 
       const response = await sendDm({ message: content }, receiverId);
       if (response?.status === 200) {
-        dispatch(setMessages([...messages, response.data.payload]));
+        dispatch(setAddNewMessage(response?.data.payload));
         setContent("");
       }
     } catch (error) {
@@ -136,7 +137,7 @@ const Dm = ({receiverId, onBack}) => {
   }, [onlineUsers, receiverId]);
 
   return (
-    <div className="flex min-h-screen bg-slate-900 flex-col">
+    <div className="flex flex-col min-h-full bg-slate-900 ">
       {/* Chat Header */}
       <div className="flex items-center justify-between border-b border-slate-700 bg-slate-800 p-3 md:p-4">
         <div className="flex items-center space-x-3">
@@ -151,9 +152,10 @@ const Dm = ({receiverId, onBack}) => {
           </Button>
 
           <div className="relative">
-            <Avatar className="h-8 w-8 md:h-10 md:w-10">
+            <Avatar className="h-8 w-8 md:h-10 md:w-10 flex-shrink-0">
               <AvatarImage
                 src={receiver?.profilePicture?.url || "/placeholder.svg"}
+                className="object-cover"
               />
               <AvatarFallback className="bg-teal-600 text-white">
                 {receiver?.username?.charAt(0)?.toUpperCase()}
@@ -164,7 +166,7 @@ const Dm = ({receiverId, onBack}) => {
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="font-semibold text-white truncate text-sm md:text-base">
+            <h2 className = {`font-semibold  truncate text-sm md:text-base ${currentUser ? "text-purple-500" : "text-orange-400" }`}>
               {receiver?.username}
             </h2>
             <p className="text-xs md:text-sm text-slate-400">
@@ -244,15 +246,15 @@ const Dm = ({receiverId, onBack}) => {
       )}
 
       {/* Messages Area */}
-      <ScrollArea className="bg-slate-900 flex-1" ref={chatRef}>
-        <div className="space-y-1 p-3 md:p-4">
+      <div className="bg-slate-900 flex-1 overflow-hidden" >
+        <div className="space-y-1 p-3 md:p-4 h-100% overflow-y-auto" ref={scrollAreaRef}>
           {messages &&
             messages.map((message, index) => {
               const showDateHeader = shouldShowDateHeader(
                 message,
                 messages[index - 1]
               );
-              const isCurrentUser = message?.sender?._id === currentUser._id;
+              
 
               return (
                 <div key={message._id}>
@@ -274,12 +276,13 @@ const Dm = ({receiverId, onBack}) => {
                     transition={{ duration: 0.2 }}
                     className="group flex items-start space-x-2 md:space-x-3 rounded-md p-2 hover:bg-slate-800/50"
                   >
-                    <Avatar className="h-8 w-8 md:h-10 md:w-10 flex-shrink-0">
+                    <Avatar className="h-8 w-8 flex-shrink-0">
                       <AvatarImage
                         src={
                           message?.sender?.profilePicture?.url ||
                           "/placeholder.svg"
                         }
+                        className="object-cover"
                       />
                       <AvatarFallback className="bg-teal-600 text-white">
                         {message?.sender?.username?.charAt(0)?.toUpperCase()}
@@ -288,7 +291,7 @@ const Dm = ({receiverId, onBack}) => {
 
                     <div className="flex-1 space-y-1 min-w-0">
                       <div className="flex items-baseline space-x-2">
-                        <span className="font-semibold text-white text-sm md:text-base truncate">
+                        <span className={`font-semibold  text-white text-sm md:text-base truncate `}>
                           {message?.sender?.username}
                         </span>
                         <span className="text-xs text-slate-400 flex-shrink-0">
@@ -301,15 +304,17 @@ const Dm = ({receiverId, onBack}) => {
                       </div>
                     </div>
                   </motion.div>
+                   <div ref={chatRef}></div>
                 </div>
               );
             })}
+           
         </div>
-      </ScrollArea>
+        
+      </div>
 
       {/* Message Input */}
-      <div className="border-t border-slate-800 bg-slate-800 p-3 
-      md:p-4 mb-15 lg:mb-0">
+      <div className="border-t border-slate-800 bg-slate-800 p-3 md:p-4 mb-15 lg:mb-0">
         <form
           onSubmit={(e) => sendMessageHandler(e)}
           className="flex items-center space-x-2"

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, useNavigate } from "react-router-dom";
 
 import HomePage from "./pages/Home.page";
 import SignupPage from "./pages/Signup.page";
@@ -13,12 +13,13 @@ import EditProfilePage from "./pages/EditProfilePage";
 import { io } from "socket.io-client";
 import { useDispatch, useSelector } from "react-redux";
 import { setSocket } from "./redux/slicers/socketSlice";
-import { setOnlineUsers } from "./redux/slicers/chatSlice";
+import { setNotification, setOnlineUsers } from "./redux/slicers/chatSlice";
 import StudyZonePage from "./pages/StudyZonePage";
 import CurrentGroupPage from "./pages/CurrentGroupPage";
 import Studyzone from "./components/studyzone/Studyzone";
 import PeerConnection from "./webrtc/Peer";
 import MemberSideBar from "./components/dm/MemberSideBar";
+import ProtectedRoutes from "./components/ProtectedRoutes";
 
 const browserRouter = createBrowserRouter([
   {
@@ -31,35 +32,37 @@ const browserRouter = createBrowserRouter([
       },
       {
         path: "/find-peers",
-        element: <FindPeersPage />,
+        element: <ProtectedRoutes><FindPeersPage /></ProtectedRoutes>,
       },
       {
         path: "/profile/:userId",
-        element: <StudyProfilePage />,
+        element: <ProtectedRoutes><StudyProfilePage /></ProtectedRoutes>,
       },
       {
         path: "/edit-profile",
-        element: <EditProfilePage />,
+        element: <ProtectedRoutes><EditProfilePage /></ProtectedRoutes>,
       },
       
       {
         path: "/study-zone/",
-        element: <CurrentGroupPage />,
+        element: <ProtectedRoutes><CurrentGroupPage /></ProtectedRoutes>,
         children: [
           {
             path: ":groupId",
-            element: <Studyzone/>
+            element: <ProtectedRoutes>
+              <Studyzone/>
+            </ProtectedRoutes>
           }
         ]
       },
 
       {
         path: "/dm/:userId",
-        element: <MemberSideBar />,
+        element: <ProtectedRoutes><MemberSideBar /></ProtectedRoutes>,
       },
       {
         path: "/webrtc",
-        element: <PeerConnection/>
+        element: <ProtectedRoutes><PeerConnection /></ProtectedRoutes>,
       }
     ],
   },
@@ -81,6 +84,7 @@ const App = () => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const socket = useSelector((state) => state.socketio.socket);
+
   useEffect(() => {
     if (user) {
       const socketio = io("http://localhost:8080", {
@@ -96,6 +100,10 @@ const App = () => {
         dispatch(setOnlineUsers(onlineUsers));
       });
 
+      socketio.on("notification", (notification) => {
+        dispatch(setNotification(notification));
+      });
+
       socketio.on("connect_error", (error) => {
         console.error("Socket connection error:", error);
       });
@@ -109,6 +117,8 @@ const App = () => {
       dispatch(setSocket(null));
     }
   }, [user, dispatch]);
+
+  
 
   return (
     <>

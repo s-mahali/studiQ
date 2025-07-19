@@ -100,6 +100,24 @@ const MultiVc = ({ groupId }) => {
     }
   }, [groupId, user, socket, peerId, isInCall, isCallActive]);
 
+  //Check if there's an active call in this group
+  const handleCheckActiveCall = async () => {
+    try {
+      const res = await checkActiveCall(groupId);
+      if (res?.status === 200 && res?.data.payload.isActive) {
+        console.log("active call", res?.data.payload);
+        setIsCallActive(true);
+        setCallParticipants(res?.data.payload.participants);
+        if(res?.data.payload.participants.length === 0) {
+          setIsInCall(false);
+          setIsCallActive(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error while checking active call", error?.message);
+    }
+  };
+
   //connect to socket for real-time updates
   useEffect(() => {
     if (!socket || !user || !groupId || !peerId) return;
@@ -121,8 +139,9 @@ const MultiVc = ({ groupId }) => {
       peerId: remotePeerId,
     }) => {
       if (callGroupId === groupId && userId !== user._id) {
-        toast.success(`${userId} joined the call`);
+        toast.success(`peer joined the call`);
         console.log("new participant:", userId, remotePeerId);
+        handleCheckActiveCall();
         //call the new participant
         if (isInCall && localStreamRef.current) {
           console.log("calling new participant:", remotePeerId);
@@ -134,7 +153,7 @@ const MultiVc = ({ groupId }) => {
     //Listen for participant leaving
     const handleUserLeft = ({ groupId: callGroupId, userId }) => {
       if (callGroupId === groupId) {
-        toast(`${userId} left the call`);
+        toast(`peer left the call`);
         //update participants list
         setCallParticipants((prev) =>
           prev.filter((p) => p.userId._id !== userId)
@@ -162,8 +181,9 @@ const MultiVc = ({ groupId }) => {
                 audio,
                 video,
               }
-            : p;
-        })
+              : p
+            
+        }) 
       );
     };
 
@@ -217,24 +237,9 @@ const MultiVc = ({ groupId }) => {
     };
   }, [socket, user, groupId, peerId, isInCall]);
 
-  //Check if there's an active call in this group
+  
 
-  const handleCheckActiveCall = async () => {
-    try {
-      const res = await checkActiveCall(groupId);
-      if (res?.status === 200 && res?.data.payload.isActive) {
-        console.log("active call", res?.data.payload);
-        setIsCallActive(true);
-        setCallParticipants(res?.data.payload.participants);
-        if(res?.data.payload.participants.length === 0) {
-          setIsInCall(false);
-          setIsCallActive(false);
-        }
-      }
-    } catch (error) {
-      console.error("Error while checking active call", error?.message);
-    }
-  };
+  
 
   //Start a new call
   const handleStartCall = async () => {
@@ -303,7 +308,7 @@ const MultiVc = ({ groupId }) => {
       //update on server
       await mediaToggle(groupId, { audio: !newMuteState }); // have a doubt here
       setIsMuted(newMuteState);
-      toast(newMuteState ? "Microphone unmuted" : "Microphone muted");
+      toast(newMuteState ? "Microphone muted" : "Microphone unmuted");
     } catch (error) {
       console.error("Error while toggling mute", error?.message);
       toast.error("Coudn't toggle mute");

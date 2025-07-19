@@ -265,7 +265,7 @@ const FindPeers = ({ className }) => {
                     >
                       <div className="h-full bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700/50 rounded-xl overflow-hidden shadow-lg hover:shadow-cyan-900/20 hover:shadow-xl transition-all">
                         {/* Card Header with Gradient */}
-                        <div className="h-12 bg-gradient-to-r from-teal-600/20 to-cyan-600/20 border-b border-slate-700/50"></div>
+                        <div className="h-12 bg-gradient-to-r from-purple-600/20 via-10% to-cyan-500/20 border-b border-slate-700/50"></div>
 
                         <div className="p-6 flex flex-col items-center">
                           {/* Profile image with status indicator */}

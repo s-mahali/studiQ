@@ -14,6 +14,7 @@ const MemberSideBar = () => {
   const { user } = useSelector((store) => store.auth);
   console.log("dmuser", user)
   const {onlineUsers} = useSelector((store) => store.chat);
+  console.log("onlineUsers", onlineUsers)
 
   // Set friends from user friend list
   useEffect(() => {
@@ -22,11 +23,7 @@ const MemberSideBar = () => {
   console.log("frienddd",friends)
   console.log("user", user);
 
-  //online status
-  const isOnline = (userId) => {
-     onlineUsers.includes(userId);
-  }
-
+  
   //Handle friend selection
   const handleFriendSelection = (userId) => {
     setReceiverId(userId);
@@ -64,7 +61,7 @@ const MemberSideBar = () => {
         fixed md:relative z-50 md:z-0
         w-80 md:w-80 sm:w-72 
         bg-slate-900 border-r border-slate-700 
-        flex flex-col min-h-screen 
+        flex flex-col min-h-full 
         transition-transform duration-300 ease-in-out
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
@@ -120,7 +117,7 @@ const MemberSideBar = () => {
                     <div className="absolute -bottom-1 -right-1">
                       <div className={`
                         w-4 h-4 rounded-full border-2 border-slate-900 flex items-center justify-center
-                        ${isOnline(friend.user._id) ? 'bg-green-500' : 'bg-slate-500'}
+                        ${onlineUsers.includes(friend?.user._id) ? 'bg-green-500' : 'bg-slate-500'}
                       `}>
                         <Circle size={8} className="fill-current" />
                       </div>
@@ -141,9 +138,9 @@ const MemberSideBar = () => {
                     
                     <p className={`
                       text-xs truncate mt-0.5
-                      ${isOnline(friend.user._id) ? 'text-green-400' : 'text-slate-500'}
+                      ${receiverId === friend?.user._id  ? 'text-green-400' : 'text-slate-500'}
                     `}>
-                      {isOnline(friend.user._id) ? 'Online' : 'Offline'}
+                      {onlineUsers.includes(friend?.user._id) ? 'Online' : 'Offline'}
                     </p>
                   </div>
 
@@ -172,14 +169,14 @@ const MemberSideBar = () => {
           <div className="flex items-center gap-2 text-slate-500">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <span className="text-xs">
-              {friends.filter(f => isOnline(f.user._id)).length} online
+              {friends.filter(f => onlineUsers.includes(f.user._id)).length} online
             </span>
           </div>
         </div>
       </div>
 
       {/* DM Component */}
-      <div className="flex-1 md:flex-1 w-full md:w-auto">
+      <div className="flex-1 md:flex-1 w-full md:w-auto ">
         {receiverId ? (
           <Dm receiverId={receiverId} onBack={isSidebarOpen} />
         ) : (

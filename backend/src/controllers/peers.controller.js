@@ -31,7 +31,7 @@ export const suggestPeers = catchAsyncError(async (req, res, next) => {
 
     let getPeerlist = await User.find({
       _id: { $nin: excludeIds },
-      ccountVerified: true,
+      acountVerified: true,
 
       $or: [
         {

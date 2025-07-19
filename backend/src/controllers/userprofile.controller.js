@@ -96,6 +96,7 @@ export const getUserProfileById = catchAsyncError(async (req, res, next) => {
     .populate("friends.user", "username profilePicture")
     .populate("friendRequests.from", "username profilePicture")
     .populate("sentFriendRequests.to", "username profilePicture")
+    .populate("groups.groupId", "title")
 
     .exec();
   if (!user) {

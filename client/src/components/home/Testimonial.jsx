@@ -91,9 +91,9 @@ const TestimonialSection = () => {
           {/* Testimonial Cards */}
           <div className="overflow-hidden relative">
             <div className="flex items-center justify-center">
-              <Card className="bg-gray-800 border-gray-700 w-full">
-                <CardContent className="p-8">
-                  <Quote className="text-teal-400 w-12 h-12 mb-6" />
+              <Card className="bg-gradient-to-br from-slate-600 via-5% to-blue-500 border border-gray-700 w-full hover:border-teal-500">
+                <CardContent className="p-4 ">
+                  <Quote className="text-teal-400 w-8 h-8 mb-6" />
                   
                   <motion.div
                     key={current}

@@ -4,6 +4,7 @@ import ErrorHandler from "../middlewares/error.middleware.js";
 import Group from "../models/group.model.js";
 import Message from "../models/message.model.js";
 import User from "../models/user.model.js";
+import {getReceiverSocketId, io} from "../socket/socket.js";
 
 export const createGroup = catchAsyncError(async (req, res, next) => {
   const userId = req.user._id;
@@ -265,8 +266,27 @@ export const addMemberToGroup = async (req, res, next) => {
   }
 
   group.members.push({ userId: joinKarnewalaKaID });
+
+  joinKarneWalaCandidate.groups.push({
+    groupId,
+    
+  });
+
   //TODO: send notification to user that he has been added to group
+  const notification = {
+    sender: group.createdBy,
+    receiver: joinKarnewalaKaID,
+    groupId,
+    message: "You have been added to a group",
+  };
+  const receiverSocketId = getReceiverSocketId(joinKarnewalaKaID);
+  console.log("receiverSocketId", receiverSocketId);
+  if (receiverSocketId) {
+    io.to(receiverSocketId).emit("notification", notification);
+  }
+  console.log("notification", notification);
   await group.save();
+  await joinKarneWalaCandidate.save();
   return res.status(200).json({
     success: true,
     message: "User Added to Group Successfully",

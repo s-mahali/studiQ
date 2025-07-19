@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
@@ -15,7 +15,8 @@ import {
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { setAuthUser } from "@/redux/slicers/authSlice";
-import { userLogin } from "@/services/api.services";
+import { fetchUserJoinedGroup, userLogin } from "@/services/api.services";
+import { setGroups } from "@/redux/slicers/groupSlice";
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -50,6 +51,8 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-900 to-black">
@@ -100,8 +103,8 @@ const Login = () => {
             <div>
               <h2 className="font-bold text-2xl">Login</h2>
               <p className="text-gray-400 mt-2">
-              Join thousands of students worldwide
-            </p>
+                Join thousands of students worldwide
+              </p>
             </div>
           </div>
 

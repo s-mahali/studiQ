@@ -34,7 +34,7 @@ const AddMemberDialog = ({open, setOpen, groupId}) => {
     const filteredConnections = connections.filter(connection => connection.user.username?.toLowerCase().includes(searchQuery.toLowerCase()));
     console.log("FilterConnection", filteredConnections)
 
-    const handleAddMember = async(userId) => {
+    const handleAddMember = async (userId) => {
          setIsLoading(true);
          try{
            const response = await addMemberToGroup({
@@ -99,7 +99,7 @@ const AddMemberDialog = ({open, setOpen, groupId}) => {
                           </div>
                           <Button
                             size="sm"
-                            onClick={() => handleAddMember(connection.user._id)}
+                            onClick={() => handleAddMember(connection?.user?._id)}
                             disabled={isLoading}
                             className="bg-teal-600 hover:bg-teal-700"
                           >

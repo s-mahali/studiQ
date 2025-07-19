@@ -14,8 +14,9 @@ const CurrentGroupPage = () => {
   const { groupId } = useParams();
   
   useEffect(() => {
-    let isRedirecting = false;
+     let isRedirecting = false;
     const fetchGroups = async () => {
+     
       try {
         const res = await fetchUserJoinedGroup();
         if (res?.status === 200) {
@@ -33,7 +34,7 @@ const CurrentGroupPage = () => {
     };
 
     fetchGroups();
-  }, [user?._id, dispatch]);
+  }, [user?._id, dispatch, navigate, user]);
   return (
     <>
       <Outlet/>

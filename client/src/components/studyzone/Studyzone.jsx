@@ -163,15 +163,18 @@ const Studyzone = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 flex overflow-hidden">
-      {/* Group selection sidebar */}
-      <motion.div
-        className="bg-gray-900 border-r border-gray-700 w-18 flex flex-col flex-shrink-0 items-center py-4"
-        initial={{ width: 72 }}
-        animate={{ width: 72 }}
-        transition={{ duration: 0.2 }}
-      >
-        {userGroups &&
-          userGroups.map((group, i) => (
+      {userGroups && userGroups.length > 0 ? (
+        // Regular study zone interface when user has groups
+        <>
+          {/* Group selection sidebar */}
+          <motion.div
+            className="bg-gray-900 border-r border-gray-700 w-18 flex flex-col flex-shrink-0 items-center py-4"
+            initial={{ width: 72 }}
+            animate={{ width: 72 }}
+            transition={{ duration: 0.2 }}
+          >
+            {userGroups &&
+              userGroups.map((group, i) => (
             <TooltipProvider key={group._id}>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -210,10 +213,10 @@ const Studyzone = () => {
               </Tooltip>
             </TooltipProvider>
           ))}
-      </motion.div>
-      {/* action sidebar */}
-      <AnimatePresence initial={false}>
-        {!sidebarCollapsed && (
+        </motion.div>
+        {/* action sidebar */}
+        <AnimatePresence initial={false}>
+          {!sidebarCollapsed && (
           <motion.div
             className="bg-slate-800 border-r border-slate-700 w-60 flex-shrink-0"
             initial={{ width: 0, opacity: 0 }}
@@ -332,7 +335,7 @@ const Studyzone = () => {
             </DropdownMenu>
           </div>
         </div>
-       { /* Chat Messages Component */}
+        {/* Chat Messages Component */}
         {isChatwindowOpen && <Groupchat groupId={groupId} />}
        
         {isAiWindowOpen && <Aiwindow groupId={groupId} />}
@@ -357,6 +360,44 @@ const Studyzone = () => {
       />
         </>
       }
+      </>
+      ) : (
+        // Empty state when user has no groups
+        <div className="w-full flex flex-col md:flex-row">
+          {/* AI assistance section */}
+          <div className="flex-1 p-4">
+            <div className="bg-slate-800 border-b border-slate-700 p-4 mb-4 rounded-t-lg">
+              <h2 className="text-white text-xl font-mono font-medium flex items-center">
+              <Brain size={20} className="mr-2 text-teal-400" />
+              AI Code Assistant
+            </h2>
+          </div>
+          <div className="flex-1 h-[calc(100vh-110px)] overflow-auto">
+            <Aiwindow noGroupMode={true} />
+          </div>
+        </div>          {/* Right side prompt */}
+          <div className="md:w-80 p-4 bg-slate-800/50 border-l border-slate-700 flex flex-col justify-center items-center text-center">
+            <div className="p-6 rounded-lg">
+              <Users size={48} className="mx-auto mb-4 text-teal-500 opacity-80" />
+              <h3 className="text-xl font-medium text-white mb-3">Join or Create a Study Group</h3>
+              <p className="text-slate-300 mb-6">
+                To access all features of StudyZone including team chat and voice discussions, 
+                join an existing group or create your own.
+              </p>
+              <div className="flex flex-col gap-3">
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+                  onClick={() => navigate('/find-peers')}
+                >
+                  Find Peers
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

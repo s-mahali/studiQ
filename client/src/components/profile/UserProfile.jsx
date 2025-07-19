@@ -19,6 +19,7 @@ import {
   BarChart3,
   Loader2,
   Pencil,
+  Plus,
   X,
 } from "lucide-react";
 import {
@@ -26,19 +27,22 @@ import {
   cancelSentRequest,
   editProfilePic,
   fetchSendRequests,
+  fetchUserJoinedGroup,
   fetchUserProfile,
   getIncomingFriendRequests,
   rejectFriendRequest,
   sendConnectionToPeers,
   userLogout,
 } from "@/services/api.services";
-import { setAuthUser} from "@/redux/slicers/authSlice";
+import { setAuthUser } from "@/redux/slicers/authSlice";
 import { AnimatePresence, motion } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { removeMessage } from "@/redux/slicers/chatSlice";
 import { formatTime } from "@/lib/formatTime";
+import { setGroups } from "@/redux/slicers/groupSlice";
+import { set } from "date-fns";
 
 export default function StudyProfilePage() {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -55,6 +59,8 @@ export default function StudyProfilePage() {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [isMember, setIsMember] = useState(false);
+  
+
   const pfpRef = useRef();
   const [pfpLoading, setPfpLoading] = useState(false);
   const { userId } = useParams();
@@ -63,10 +69,15 @@ export default function StudyProfilePage() {
   const navigate = useNavigate();
   const authorId = useSelector((state) => state.auth.user?._id);
   const isAuthor = authorId === userId;
-  const {userGroups} = useSelector((store) => store.group);
-  const {groupMembers} = useSelector((store) => store.group);
+  const { userGroups } = useSelector((store) => store.group);
+  const { groupMembers } = useSelector((store) => store.group);
   console.log(groupMembers);
-  const {user} = useSelector((store) => store.auth);
+  const { user } = useSelector((store) => store.auth);
+  const socket = useSelector((state) => state.socketio.socket);
+  const {notification} = useSelector((store) => store.chat);
+
+  
+  
 
   const fileChangeHandler = (e) => {
     const file = e.target.files?.[0];
@@ -80,14 +91,13 @@ export default function StudyProfilePage() {
     async function fetchProfileData() {
       try {
         if (!userId) {
-          
           setProfileLoading(false);
           return;
         }
         const response = await fetchUserProfile(userId);
         if (response?.status === 200) {
           setProfileData(response?.data.payload);
-          
+
           if (userId === authorId) {
             dispatch(setAuthUser(response.data.payload));
           }
@@ -101,6 +111,7 @@ export default function StudyProfilePage() {
     }
     fetchProfileData();
   }, [userId, dispatch, navigate, authorId]);
+  console.log("profileDatanew", profileData);
 
   const updatePfp = async () => {
     if (!pfpUrl) return;
@@ -245,8 +256,8 @@ export default function StudyProfilePage() {
         profileData.friends.length > 0 &&
         profileData.friends.some(
           (friend) =>
-            friend.user._id.toString() == authorId.toString() ||
-            (friend.user._id && friend.user._id == authorId)
+            friend?.user?._id == authorId ||
+            (friend?.user?._id && friend?.user?._id == authorId)
         );
 
       if (isFriend) {
@@ -270,17 +281,22 @@ export default function StudyProfilePage() {
       }
       setRelationshipStatus("none");
     }
-  }, [isAuthor, profileData, incomingRequest, sendRequest, userId, authorId]);
+  }, [isAuthor, profileData]);
 
   useEffect(() => {
     incomingRequestHandler();
     sentRequestHandler();
-  }, [isAuthor, profileData, incomingRequest, sendRequest, userId, authorId]);
+  }, [isAuthor, profileData]);
 
   useEffect(() => {
-      const isMember = groupMembers?.includes(user?._id);
-      setIsMember(isMember);
-  },[])
+    const isMember = groupMembers?.includes(user?._id);
+    setIsMember(isMember);
+  }, [groupMembers, user]);
+
+  console.log("notificationsocket", socket);
+
+  console.log("notificationMessage", notification);
+
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -289,12 +305,61 @@ export default function StudyProfilePage() {
           <Loader2 className="animate-spin  w-16 h-16 text-teal-400" />
         </div>
       ) : (
-        <div className="bg-gradient-to-b from-teal-900/30 to-transparent py-8">
+        <div className="bg-gradient-to-br from-slate-700/30 via-5% to-slate-600/50 backdrop-blur-md bg-opacity-00 py-8 ">
+        
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
           >
+            {isAuthor && (
+              <div className="container mx-auto px-4 mb-6">
+                {(!profileData?.profilePicture?.url ||
+                  !profileData?.skills?.length ||
+                  !profileData?.subjects?.length) && (
+                  <div className="bg-gradient-to-r from-teal-900/50 to-slate-900/50 border border-teal-700/50 rounded-lg p-4 shadow-lg">
+                    <h3 className="font-semibold text-teal-300 mb-2 flex items-center">
+                      <Award className="mr-2" size={18} />
+                      Complete your profile
+                    </h3>
+                    <p className="text-slate-300 mb-3">
+                      Your profile is incomplete. Add the following so other
+                      peers can find you:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {!profileData?.profilePicture?.url && (
+                        <span
+                          onClick={() => {
+                            setEditPfpOpen(true);
+                            setTimeout(() => pfpRef.current?.click(), 200);
+                          }}
+                          className="bg-slate-700/70 hover:bg-slate-700 px-3 py-1 rounded-full text-sm flex items-center cursor-pointer"
+                        >
+                          <Plus size={14} className="mr-1" />
+                          Profile Picture
+                        </span>
+                      )}
+                      {!profileData?.skills?.length && (
+                        <Link to="/edit-profile">
+                          <span className="bg-slate-700/70 hover:bg-slate-700 px-3 py-1 rounded-full text-sm flex items-center cursor-pointer">
+                            <Plus size={14} className="mr-1" />
+                            Skills
+                          </span>
+                        </Link>
+                      )}
+                      {!profileData?.subjects?.length && (
+                        <Link to="/edit-profile">
+                          <span className="bg-slate-700/70 hover:bg-slate-700 px-3 py-1 rounded-full text-sm flex items-center cursor-pointer">
+                            <Plus size={14} className="mr-1" />
+                            Subjects
+                          </span>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="container mx-auto px-4">
               <div className="flex flex-col lg:flex-row justify-between gap-8">
                 {/* Left column: Profile info */}
@@ -305,16 +370,22 @@ export default function StudyProfilePage() {
                       onMouseEnter={() => setAvatarHover(true)}
                       onMouseLeave={() => setAvatarHover(false)}
                     >
-                      <img
-                        src={profileData?.profilePicture.url}
-                        alt="Profile"
-                        className="w-32 h-32 rounded-full border-4 border-teal-500 aspect-square object-cover"
-                      />
+                      {profileData?.profilePicture?.url ? (
+                        <img
+                          src={profileData.profilePicture.url}
+                          alt="Profile"
+                          className="w-32 h-32 rounded-full border-4 border-teal-500 aspect-square object-cover"
+                        />
+                      ) : (
+                        <div className="w-32 h-32 rounded-full border-4 border-teal-500 bg-gray-700 flex items-center justify-center">
+                          <User size={48} className="text-gray-400" />
+                        </div>
+                      )}
                       {profileData?.isActive && (
                         <span className="absolute bottom-2 right-2 w-4 h-4 bg-green-400 rounded-full border-2 border-gray-900"></span>
                       )}
                       {
-                        // hover overlay
+                        // hover overlay for editing profile picture
                         <AnimatePresence>
                           {avatarHover && isAuthor && (
                             <motion.button
@@ -332,14 +403,18 @@ export default function StudyProfilePage() {
                               type="button"
                             >
                               <span className="flex flex-col items-center">
-                                <Pencil className="w-6 h-6 text-white mb-1 " />
+                                <Pencil className="w-6 h-6 text-white mb-1" />
+                                {!profileData?.profilePicture?.url && (
+                                  <span className="text-xs text-white">
+                                    Add photo
+                                  </span>
+                                )}
                               </span>
                             </motion.button>
                           )}
                         </AnimatePresence>
                       }
                     </div>
-
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h1 className="text-3xl font-bold">
@@ -505,14 +580,14 @@ export default function StudyProfilePage() {
                           <span className="text-gray-400">Progress</span>
                           <span className="text-teal-400 font-medium">
                             {/* {profileData?.activity.progress || 70}% */}
-                            70%
+                            10%
                           </span>
                         </div>
                         <div className="h-2 bg-gray-700 rounded-full mb-6">
                           <div
                             className="h-2 bg-gradient-to-r from-teal-500 to-teal-300 rounded-full"
                             style={{
-                              width: `70%`,
+                              width: `10%`,
                             }}
                           ></div>
                         </div>
@@ -524,13 +599,13 @@ export default function StudyProfilePage() {
                             </div>
                             <div className="text-lg font-semibold">
                               {/* {profileData?.activity.totalStudyTime} || 70 */}
-                              150
+                              18
                             </div>
                           </div>
                           <div className="text-right">
                             <div className="text-gray-400">Weekly Goal</div>
                             <div className="text-lg font-semibold">
-                              160 hours
+                              60 hours
                             </div>
                           </div>
                         </div>
@@ -555,14 +630,37 @@ export default function StudyProfilePage() {
                         Subjects
                       </h2>
                       <div className="flex flex-wrap gap-2">
-                        {profileData?.subjects.map((subject, index) => (
-                          <span
-                            key={index}
-                            className="bg-gray-700 text-teal-300 px-3 py-1 rounded-full text-sm"
-                          >
-                            {subject.name}
-                          </span>
-                        ))}
+                        {profileData?.subjects &&
+                        profileData.subjects.length > 0 ? (
+                          profileData.subjects.map((subject, index) => (
+                            <span
+                              key={index}
+                              className="bg-gray-700 text-teal-300 px-3 py-1 rounded-full text-sm"
+                            >
+                              {subject.name}
+                            </span>
+                          ))
+                        ) : (
+                          <div className="w-full text-center py-4">
+                            {isAuthor ? (
+                              <div className="flex flex-col items-center">
+                                <p className="text-gray-400 mb-2">
+                                  No subjects added yet
+                                </p>
+                                <Link to="/edit-profile">
+                                  <button className="bg-gray-700 hover:bg-gray-600 text-sm px-3 py-1 rounded-md flex items-center">
+                                    <Plus size={14} className="mr-1" />
+                                    Add subjects
+                                  </button>
+                                </Link>
+                              </div>
+                            ) : (
+                              <p className="text-gray-400">
+                                No subjects listed
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -572,14 +670,35 @@ export default function StudyProfilePage() {
                         Skills
                       </h2>
                       <div className="flex flex-wrap gap-2">
-                        {profileData?.skills.map((skill, index) => (
-                          <span
-                            key={index}
-                            className="bg-gray-700 text-teal-300 px-3 py-1 rounded-full text-sm"
-                          >
-                            {skill.name}
-                          </span>
-                        ))}
+                        {profileData?.skills &&
+                        profileData.skills.length > 0 ? (
+                          profileData.skills.map((skill, index) => (
+                            <span
+                              key={index}
+                              className="bg-gray-700 text-teal-300 px-3 py-1 rounded-full text-sm"
+                            >
+                              {skill.name}
+                            </span>
+                          ))
+                        ) : (
+                          <div className="w-full text-center py-4">
+                            {isAuthor ? (
+                              <div className="flex flex-col items-center">
+                                <p className="text-gray-400 mb-2">
+                                  No skills added yet
+                                </p>
+                                <Link to="/edit-profile">
+                                  <button className="bg-gray-700 hover:bg-gray-600 text-sm px-3 py-1 rounded-md flex items-center">
+                                    <Plus size={14} className="mr-1" />
+                                    Add skills
+                                  </button>
+                                </Link>
+                              </div>
+                            ) : (
+                              <p className="text-gray-400">No skills listed</p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -591,20 +710,45 @@ export default function StudyProfilePage() {
                       Study Groups
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {userGroups && userGroups.map((group) => (
-                        <div
-                          key={group.id}
-                          className="bg-gray-700/50 p-4 rounded-lg flex items-center justify-between"
-                        >
-                          <span>{group.title}</span>
-                          {
-                           isMember || isAuthor &&
-                            <Link className="text-teal-400 hover:text-teal-300 transition-colors" to={`/study-zone/${group?._id}`}>
-                            View
-                          </Link>
-                          }
+                      {profileData?.groups?.length > 0 ? (
+                        profileData.groups.map((group) => (
+                          <div
+                            key={group._id}
+                            className="bg-gray-700/50 p-4 rounded-lg flex items-center justify-between"
+                          >
+                            <span>{group.groupId?.title}</span>
+                            {(isMember || isAuthor) && (
+                              <Link
+                                className="text-teal-400 hover:text-teal-300 transition-colors"
+                                to={`/study-zone/${group?.groupId?._id}`}
+                              >
+                                View
+                              </Link>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="col-span-full bg-gray-700/30 p-8 rounded-lg text-center">
+                          <Layers
+                            size={40}
+                            className="mx-auto mb-2 text-gray-500"
+                          />
+                          <p className="text-gray-400">
+                            {isAuthor
+                              ? `You're not a member of any study groups yet.
+                               Make Connection & Create or Get Invite to join a Group`
+                              : `@${profileData?.username} isn't in any study groups yet`}
+                          </p>
+
+                          {isAuthor && (
+                            <Link to="/find-peers">
+                              <button className="mt-3 bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded-md transition-colors text-sm font-medium">
+                                Make Connection
+                              </button>
+                            </Link>
+                          )}
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 </div>
@@ -782,14 +926,14 @@ export default function StudyProfilePage() {
                     <div className="space-y-3">
                       {profileData?.friends.slice(0, 4).map((friend) => (
                         <div
-                          key={friend.id}
+                          key={friend._id}
                           className="flex items-center gap-3"
                         >
-                          {friend.user.profilePicture ? (
+                          {friend?.user?.profilePicture ? (
                             <img
                               src={friend.user.profilePicture.url}
                               alt={friend.user.username}
-                              className="w-8 h-8 rounded-full"
+                              className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (
                             <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs">
@@ -797,10 +941,10 @@ export default function StudyProfilePage() {
                             </div>
                           )}
                           <Link
-                            to={`/profile/${friend.user._id.toString()}`}
+                            to={`/profile/${friend?.user?._id}`}
                             className="text-sm"
                           >
-                            {friend.user.username}
+                            {friend?.user?.username}
                           </Link>
                         </div>
                       ))}
