@@ -137,7 +137,7 @@ const Aiwindow = ({ groupId }) => {
         </div>
       </div> */}
 
-      <ScrollArea className="p-4 flex-1 overflow-auto" ref={scrollAreaRef}>
+      <ScrollArea className="p-4" ref={scrollAreaRef}  style={{ height: "calc(100vh - 138px)" }}>
         <div className="space-y-4">
           {conversation?.map((message) => (
             <motion.div
@@ -249,8 +249,9 @@ const Aiwindow = ({ groupId }) => {
               </div>
             </motion.div>
           )}
-          <div ref={chatEndRef} />
+          
         </div>
+        <div ref={chatEndRef} />
       </ScrollArea>
 
       <div className="p-4 bg-slate-800 border-t mb-12 lg:mb-0">

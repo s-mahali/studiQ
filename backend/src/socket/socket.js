@@ -8,7 +8,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["https://studiq-jet.vercel.app","http://localhost:5173"],
+    origin: "https://studiq-jet.vercel.app",
     methods: ["GET", "POST"],
   },
 });

@@ -42,7 +42,7 @@ const Signup = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-teal-500/20 to-teal-900/40" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(0,200,200,0.15),transparent_70%)]" />
         
-        <div className="relative flex flex-col justify-center items-center h-full z-10 px-12">
+        <div className="relative flex flex-col justify-center items-center min-h-full z-10 px-12">
           <h1 className="text-5xl font-bold text-white mb-8">Join Our Learning Community</h1>
           <p className="text-xl text-gray-200 mb-8 max-w-md">
             Connect with learners, share resources, and achieve your academic goals together.
