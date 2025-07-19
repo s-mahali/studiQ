@@ -4,7 +4,7 @@ const ai = new GoogleGenAI({
   apiKey:
     process.env.GEMINI_API_KEY 
 });
-console.log("geminiKey", process.env.GEMINI_API_KEY);
+
 
 export async function explainCode(req, res) {
   try {

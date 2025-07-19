@@ -87,7 +87,9 @@ const App = () => {
 
   useEffect(() => {
     if (user) {
-      const socketio = io("import.meta.env.VITE_SOCKET_URL", {
+      const socketURL = import.meta.env.VITE_SOCKET_URL;
+      
+      const socketio = io(socketURL, {
         query: {
           userId: user?._id,
         },
