@@ -129,7 +129,7 @@ const Studyzone = () => {
     }
     const activeGroup = userGroups.find((group) => group._id === groupId);
     setActiveGroup(activeGroup);
-    if(activeGroup?.members?.some((member) => member.userId._id === user._id && member.role === "owner")){
+    if(activeGroup?.members?.some((member) => member?.userId?._id === user?._id && member?.role === "owner")){
        setIsowner(true);
     }
   }, [groupId, dispatch]);
@@ -143,7 +143,7 @@ const Studyzone = () => {
         const response = await fetchGroupById(groupId);
         if (response?.status === 200) {
           console.log("fetchUserGroupById", response?.data?.payload);
-          dispatch(setGroupMembers(response?.data?.payload.members));
+          dispatch(setGroupMembers(response?.data?.payload?.members));
         }
       } catch (error) {
         console.error(error.message);
@@ -157,7 +157,7 @@ const Studyzone = () => {
 
   //total online users 
   useEffect(() => {
-      const totalOnlineUsers =   groupMembers.filter((member) => onlineUsers.includes(member.userId._id)).length;
+      const totalOnlineUsers =   groupMembers.filter((member) => onlineUsers.includes(member.userId?._id)).length;
       setTotalOnlineUsers(totalOnlineUsers);
     },[onlineUsers, groupMembers, groupId]);
 

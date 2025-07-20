@@ -24,8 +24,8 @@ const GroupMembers = ({groupId, isLoading}) => {
     }, [groupMembers]);
 
   useEffect(() => {
-      const onlineMembers = groupMembers?.filter((m) => onlineUsers.includes(m.userId._id));
-      const offlineMembers = groupMembers?.filter((m) => !onlineUsers.includes(m.userId._id));
+      const onlineMembers = groupMembers?.filter((m) => onlineUsers?.includes(m?.userId?._id));
+      const offlineMembers = groupMembers?.filter((m) => !onlineUsers?.includes(m?.userId?._id));
       setOnlineMembers(onlineMembers);
       setOfflineMembers(offlineMembers);
   },[groupMembers, onlineUsers]);
@@ -112,14 +112,14 @@ const GroupMembers = ({groupId, isLoading}) => {
                 >
                   <div className="relative">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={member.userId.profilePicture.url} />
+                      <AvatarImage src={member?.userId?.profilePicture?.url} />
                       <AvatarFallback className="bg-slate-700 text-gray-500">
-                        {member.userId.username.substring(0, 2).toUpperCase()}
+                        {member.userId?.username?.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-gray-500 border border-slate-800"></span>
                   </div>
-                  <span className="text-slate-500 text-sm">{member.userId.username}</span>
+                  <span className="text-slate-500 text-sm">{member?.userId?.username}</span>
                 </motion.div>
               )))}
               

@@ -127,7 +127,7 @@ const Groupchat = ({ groupId }) => {
                 </div>
              ))
           ) : (
-            groupMessages?.map((message) => (
+            groupMessages && groupMessages?.map((message) => (
               <motion.div
                 key={message._id}
                 initial={{ opacity: 0, y: 10 }}
@@ -136,7 +136,7 @@ const Groupchat = ({ groupId }) => {
               >
                 <Avatar className={"h-9 w-9"}>
                   <AvatarImage
-                    src={message.sender.profilePicture.url}
+                    src={message.sender?.profilePicture?.url}
                     className={"object-fill"}
                   />
                   <AvatarFallback className={"bg-slate-700 text-teal-300"}>
@@ -146,19 +146,19 @@ const Groupchat = ({ groupId }) => {
                 <div>
                   <div className="flex items-baseline">
                     <span
-                      className={`font-medium  ${ currentGroup?.createdBy === message?.sender._id ? "text-blue-600" :
-                        user?._id == message?.sender._id
+                      className={`font-medium  ${ currentGroup?.createdBy === message?.sender?._id ? "text-blue-600" :
+                        user?._id == message?.sender?._id
                           ? "text-purple-600"
                           : "text-teal-300"
                       }`}
                     >
-                      {message.sender.username}
+                      {message?.sender?.username}
                     </span>
                     <span className="ml-2 text-xs text-slate-500">
-                      {formatTime(message.createdAt)}
+                      {formatTime(message?.createdAt)}
                     </span>
                   </div>
-                  <p className="text-slate-300">{message.content}</p>
+                  <p className="text-slate-300">{message?.content}</p>
                 </div>
               </motion.div>
             ))

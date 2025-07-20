@@ -90,15 +90,15 @@ const MemberSideBar = () => {
         {/* Friends List */}
         <ScrollArea className="flex-1 px-2 py-2">
           <div className="space-y-1">
-            {friends.length > 0 ? (
+            {friends && friends.length > 0 ? (
               friends.map((friend) => (
                 <div
-                  key={friend?.user._id}
-                  onClick={() =>{handleFriendSelection(friend?.user._id) }}
+                  key={friend?.user?._id}
+                  onClick={() => handleFriendSelection(friend?.user?._id) }
                   className={`
                     flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200
                     hover:bg-slate-800/60 group
-                    ${receiverId === friend?.user._id 
+                    ${receiverId === friend?.user?._id 
                       ? 'bg-slate-800 border-l-2 border-teal-500' 
                       : 'hover:bg-slate-800/40'
                     }
@@ -117,7 +117,7 @@ const MemberSideBar = () => {
                     <div className="absolute -bottom-1 -right-1">
                       <div className={`
                         w-4 h-4 rounded-full border-2 border-slate-900 flex items-center justify-center
-                        ${onlineUsers.includes(friend?.user._id) ? 'bg-green-500' : 'bg-slate-500'}
+                        ${onlineUsers.includes(friend?.user?._id) ? 'bg-green-500' : 'bg-slate-500'}
                       `}>
                         <Circle size={8} className="fill-current" />
                       </div>
@@ -129,7 +129,7 @@ const MemberSideBar = () => {
                     <div className="flex items-center justify-between">
                       <h4 className={`
                         font-medium text-sm truncate
-                        ${receiverId === friend?.user._id ? 'text-white' : 'text-slate-300'}
+                        ${receiverId === friend?.user?._id ? 'text-white' : 'text-slate-300'}
                         group-hover:text-white transition-colors
                       `}>
                         {friend.user?.username || "Unknown User"}
@@ -138,14 +138,14 @@ const MemberSideBar = () => {
                     
                     <p className={`
                       text-xs truncate mt-0.5
-                      ${receiverId === friend?.user._id  ? 'text-green-400' : 'text-slate-500'}
+                      ${receiverId === friend?.user?._id  ? 'text-green-400' : 'text-slate-500'}
                     `}>
-                      {onlineUsers.includes(friend?.user._id) ? 'Online' : 'Offline'}
+                      {onlineUsers.includes(friend?.user?._id) ? 'Online' : 'Offline'}
                     </p>
                   </div>
 
                   {/* Message indicator (optional) */}
-                  {receiverId === friend?.user._id && (
+                  {receiverId === friend?.user?._id && (
                     <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
                   )}
                 </div>
@@ -169,7 +169,7 @@ const MemberSideBar = () => {
           <div className="flex items-center gap-2 text-slate-500">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <span className="text-xs">
-              {friends.filter(f => onlineUsers.includes(f.user._id)).length} online
+              {friends.filter(f => onlineUsers.includes(f.user?._id)).length} online
             </span>
           </div>
         </div>
